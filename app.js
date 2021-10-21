@@ -26,7 +26,7 @@ mongoose
 
 app.get("/", (req, res) => res.send("Hello from homepage"));
 
-var userRouter = require("./routes/userRouter");
+var userRouter = require("./router/userRouter");
 app.use("/api/users", userRouter);
 
 app.listen(PORT, () =>

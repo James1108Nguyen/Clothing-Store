@@ -1,8 +1,10 @@
-const mongoose = require("mongoose");
 const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
 const morgan = require("morgan");
 
-const app = express();
+//Log web
+app.use(morgan("tiny"));
 
 //Evironment variables
 require("dotenv").config();
@@ -15,8 +17,10 @@ app.use(express.json()); //to support JSON encode
 var cors = require("cors");
 app.use(cors());
 
-//Log web
-app.use(morgan("tiny"));
+app.get("/", (req, res) => res.send("Hello from homepage"));
+
+var userRouter = require("./router/userRouter");
+app.use("/api/users", userRouter);
 
 mongoose
   .connect(process.env.conectionString, {
@@ -27,11 +31,6 @@ mongoose
     console.log("Database is connected");
   })
   .catch((err) => console.log(err));
-
-app.get("/", (req, res) => res.send("Hello from homepage"));
-
-var userRouter = require("./router/userRouter");
-app.use("/api/users", userRouter);
 
 const PORT = process.env.PORT || 3000;
 var server = app.listen(PORT, function () {

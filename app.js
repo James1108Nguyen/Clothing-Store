@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-var cors = require("cors");
 
 //Evironment variables
 require("dotenv").config();

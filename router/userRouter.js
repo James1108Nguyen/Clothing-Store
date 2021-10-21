@@ -1,12 +1,11 @@
 const express = require("express");
-const cors = require("cors");
 const router = express.Router();
 const { User } = require("../models/userModel");
-const bcrypt = require("bcrypt");
 const verifyToken = require("../middlewares/verifyToken");
 const jwt = require("jsonwebtoken");
 
 //Hash Pass
+const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const salt = bcrypt.genSaltSync(saltRounds);
 

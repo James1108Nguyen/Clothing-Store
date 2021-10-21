@@ -8,7 +8,6 @@ var cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
@@ -34,6 +33,7 @@ app.get("/", (req, res) => res.send("Hello from homepage"));
 var userRouter = require("./router/userRouter");
 app.use("/api/users", userRouter);
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`Server Running on port: http://localhost:${PORT}`)
 );

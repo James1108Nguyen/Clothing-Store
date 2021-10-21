@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
 const morgan = require("morgan");
 
+//Evironment variables
+require("dotenv").config();
+
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 //Middleware
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies

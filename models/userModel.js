@@ -31,7 +31,6 @@ let user_Schema = new Schema({
   position: {
     type: String,
     required: true,
-    unique: true,
   },
 });
 

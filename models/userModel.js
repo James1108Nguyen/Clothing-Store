@@ -3,7 +3,7 @@ var uniqueValidator = require("mongoose-unique-validator");
 
 const Schema = mongoose.Schema;
 
-const userSchema = new Schema({
+let user_Schema = new Schema({
   username: {
     type: String,
     required: true,
@@ -28,7 +28,13 @@ const userSchema = new Schema({
   imageUrl: {
     type: String,
   },
+  position: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 });
 
-userSchema.plugin(uniqueValidator);
-exports.User = mongoose.model("User", userSchema);
+user_Schema.plugin(uniqueValidator);
+
+exports.User = mongoose.model("User", user_Schema);

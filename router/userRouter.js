@@ -1,8 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { User } = require("../models/userModel");
 const verifyToken = require("../middlewares/verifyToken");
 const jwt = require("jsonwebtoken");
+const { User } = require("../models/userModel");
+const { Per } = require("../models/userModel");
+const { UserPermissions } = require("../models/userModel");
+const { Action } = require("../models/userModel");
+const { PermissionbyUser } = require("../models/userModel");
 
 //Hash Pass
 const bcrypt = require("bcrypt");
@@ -17,6 +21,7 @@ router.get("/", verifyToken, (request, response) => {
     });
 });
 
+//login
 router.post("/login", async function (req, res) {
   let user = await User.findOne({ username: req.body.username });
   if (!req.body.username) {
@@ -77,7 +82,7 @@ router.get("/getInfo/:id", async function (req, res) {
     return res.status(422).send("Info not found");
   } else return res.status(200).send(info);
 });
-
+// Register
 router.post("/register", async (req, res) => {
   console.log(req.body);
   let user = User({
@@ -87,6 +92,7 @@ router.post("/register", async (req, res) => {
     address: req.body.address,
     email: req.body.email,
     imageUrl: "",
+    position: req.body.position,
   });
 
   user
@@ -97,6 +103,25 @@ router.post("/register", async (req, res) => {
     .catch((err) => {
       res.status(400).send(err);
     });
+});
+
+//Permission
+
+router.get("/permission/", async (req, res) => {
+  res.status(200).send("Welcome to permission page!!");
+});
+
+//Creat NewAction
+router.post("permission/action", async (req, res) => {
+  let action = new Action({
+    actionName: req.body.actionName,
+  });
+});
+
+router.post("permission/per", async (req, res) => {
+  let action = new Action({
+    actionName: req.body.actionName,
+  });
 });
 
 module.exports = router;

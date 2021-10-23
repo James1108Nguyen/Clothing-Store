@@ -41,11 +41,14 @@ router.post("/login", async function (req, res) {
         "Rất tiếc, mật khẩu của bạn không đúng. Vui lòng kiểm tra lại mật khẩu."
       );
   }
-
   const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, {
     expiresIn: 60 * 60 * 24 * 15,
   });
-  res.header("auth-token", token).send(token);
+
+  res.status(200).send({
+    "auth-token": token,
+    position: user.position,
+  });
 });
 
 //Change Password
@@ -73,15 +76,18 @@ router.post("/changePass", async function (req, res) {
   );
 });
 //Get Info
+//Info
 router.get("/getInfo/:id", async function (req, res) {
+  console.log(req.params.id);
   if (!req.params.id) {
     return res.status(400).send("Error");
   }
-  let info = await userInfo.findOne({ user: req.params.id });
+  let info = await User.findById(req.params.id).select("-password");
   if (!info) {
     return res.status(422).send("Info not found");
   } else return res.status(200).send(info);
 });
+
 // Register
 router.post("/register", async (req, res) => {
   console.log(req.body);
@@ -93,6 +99,7 @@ router.post("/register", async (req, res) => {
     email: req.body.email,
     imageUrl: "",
     position: req.body.position,
+    gender: req.body.gender,
   });
 
   user
@@ -103,25 +110,6 @@ router.post("/register", async (req, res) => {
     .catch((err) => {
       res.status(400).send(err);
     });
-});
-
-//Permission
-
-router.get("/permission/", async (req, res) => {
-  res.status(200).send("Welcome to permission page!!");
-});
-
-//Creat NewAction
-router.post("permission/action", async (req, res) => {
-  let action = new Action({
-    actionName: req.body.actionName,
-  });
-});
-
-router.post("permission/per", async (req, res) => {
-  let action = new Action({
-    actionName: req.body.actionName,
-  });
 });
 
 module.exports = router;

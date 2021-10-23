@@ -24,7 +24,9 @@ let user_Schema = new Schema({
   email: {
     type: String,
   },
-
+  gender: {
+    type: String,
+  },
   imageUrl: {
     type: String,
   },

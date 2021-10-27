@@ -2,11 +2,7 @@ const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middlewares/verifyToken");
 const jwt = require("jsonwebtoken");
-const { User } = require("../models/userModel");
-const { Per } = require("../models/userModel");
-const { UserPermissions } = require("../models/userModel");
-const { Action } = require("../models/userModel");
-const { PermissionbyUser } = require("../models/userModel");
+const { User } = require("../models/user");
 
 //Hash Pass
 const bcrypt = require("bcrypt");
@@ -48,6 +44,7 @@ router.post("/login", async function (req, res) {
   res.status(200).send({
     "auth-token": token,
     position: user.position,
+    userId: user._id,
   });
 });
 
@@ -77,12 +74,11 @@ router.post("/changePass", async function (req, res) {
 });
 //Get Info
 //Info
-router.get("/getInfo/:id", async function (req, res) {
-  console.log(req.params.id);
-  if (!req.params.id) {
+router.get("/getInfo/", async function (req, res) {
+  if (!req.query.id) {
     return res.status(400).send("Error");
   }
-  let info = await User.findById(req.params.id).select("-password");
+  let info = await User.findById(req.query.id).select("-password");
   if (!info) {
     return res.status(422).send("Info not found");
   } else return res.status(200).send(info);

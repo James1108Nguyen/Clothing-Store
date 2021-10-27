@@ -22,6 +22,12 @@ app.get("/", (req, res) => res.send("Hello from homepage"));
 var userRouter = require("./router/userRouter");
 app.use("/api/users", userRouter);
 
+var customerRouter = require("./router/customerRouter");
+app.use("/api/customers", customerRouter);
+
+var orderRouter = require("./router/orderRouter");
+app.use("/api/orders", orderRouter);
+
 mongoose
   .connect(process.env.conectionString, {
     useNewUrlParser: true,

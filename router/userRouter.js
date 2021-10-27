@@ -88,6 +88,7 @@ router.get("/getInfo/", async function (req, res) {
 router.post("/register", async (req, res) => {
   console.log(req.body);
   let user = User({
+    name: req.body.name,
     username: req.body.username,
     password: bcrypt.hashSync(req.body.password, salt),
     phone: req.body.phone,

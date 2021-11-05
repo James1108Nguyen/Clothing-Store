@@ -38,7 +38,7 @@ mongoose
   })
   .catch((err) => console.log(err));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 var server = app.listen(PORT, function () {
   var port = server.address().port;
   console.log("Server Running on port", port);

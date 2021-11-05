@@ -3,13 +3,16 @@ const router = express.Router();
 const verifyToken = require("../middlewares/verifyToken");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
-
+const { multerUploads } = require("../middlewares/multer");
+const { cloudinary } = require("../config/cloudinary");
+const getFileBuffer = require("../middlewares/getFileBuffer");
+const path = require("path");
 //Hash Pass
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const salt = bcrypt.genSaltSync(saltRounds);
 
-router.get("/", verifyToken, (request, response) => {
+router.get("/", (request, response) => {
   User.find({})
     .select("-password")
     .exec(function (err, users) {
@@ -85,18 +88,31 @@ router.get("/getInfo/", async function (req, res) {
 });
 
 // Register
-router.post("/register", async (req, res) => {
+router.post("/register", multerUploads, async (req, res) => {
+  const urlDefault =
+    "https://res.cloudinary.com/hoquanglinh/image/upload/v1635330645/profile_ieghzz.jpg";
+
+  if (req.file) {
+    const buffer = req.file.buffer;
+    const file = getFileBuffer(path.extname(req.file.originalname), buffer);
+
+    //upload file to clould
+    var image = await cloudinary.uploader.upload(file, {
+      folder: "Linh",
+    });
+  }
   console.log(req.body);
   let user = User({
-    name: req.body.name,
+    fullname: req.body.fullname,
     username: req.body.username,
     password: bcrypt.hashSync(req.body.password, salt),
     phone: req.body.phone,
     address: req.body.address,
     email: req.body.email,
-    imageUrl: "",
+    imageUrl: image ? image.url : urlDefault,
     position: req.body.position,
     gender: req.body.gender,
+    birthday: req.body.birthday,
   });
 
   user
@@ -104,7 +120,18 @@ router.post("/register", async (req, res) => {
     .then((newUser) => {
       res.status(200).send(newUser);
     })
-    .catch((err) => {
+    .catch(async (err) => {
+      if (image) {
+        await cloudinary.uploader.destroy(
+          image.public_id,
+          function (err, result) {
+            if (err) {
+              res.status(500).send(err);
+            }
+          }
+        );
+      }
+
       res.status(400).send(err);
     });
 });

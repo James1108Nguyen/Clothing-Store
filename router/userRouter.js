@@ -135,5 +135,64 @@ router.post("/register", multerUploads, async (req, res) => {
       res.status(400).send(err);
     });
 });
+//Update User
+router.put("/updateUser/:id", multerUploads, async (req, res) => {
+  console.log(req.params.id);
+  const urlDefault =
+    "https://res.cloudinary.com/hoquanglinh/image/upload/v1635330645/profile_ieghzz.jpg";
+
+  if (req.file) {
+    const buffer = req.file.buffer;
+    const file = getFileBuffer(path.extname(req.file.originalname), buffer);
+
+    //upload file to clould
+    var image = await cloudinary.uploader.upload(file, {
+      folder: "Linh",
+    });
+  }
+  console.log(req.body);
+  let user = User({
+    fullname: req.body.fullname,
+    phone: req.body.phone,
+    address: req.body.address,
+    email: req.body.email,
+    imageUrl: image ? image.url : urlDefault,
+    position: req.body.position,
+    gender: req.body.gender,
+    birthday: req.body.birthday || new Date(),
+  });
+
+  User.findOneAndUpdate(
+    { id: req.params.id },
+    {
+      fullname: req.body.fullname,
+      phone: req.body.phone,
+      address: req.body.address,
+      email: req.body.email,
+      imageUrl: image ? image.url : urlDefault,
+      position: req.body.position,
+      gender: req.body.gender,
+      birthday: req.body.birthday || new Date(),
+    }
+  )
+    .then((newUser) => {
+      res.send("success");
+      //res.status(200).send(newUser);
+    })
+    .catch(async (err) => {
+      if (image) {
+        await cloudinary.uploader.destroy(
+          image.public_id,
+          function (err, result) {
+            if (err) {
+              res.status(500).send(err);
+            }
+          }
+        );
+      }
+
+      res.status(400).send(err);
+    });
+});
 
 module.exports = router;

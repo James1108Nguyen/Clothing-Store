@@ -40,7 +40,8 @@ let user_Schema = new Schema({
   },
   birthday: {
     type: Date,
-    required: true,
+
+    default: Date.now,
   },
 });
 

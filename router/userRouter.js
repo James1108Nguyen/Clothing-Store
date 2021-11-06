@@ -87,6 +87,32 @@ router.get("/getInfo/", async function (req, res) {
   } else return res.status(200).send(info);
 });
 
+//filter user by position
+router.get("/getUserByPosition/", function (req, res) {
+  const position = req.query.position;
+  if (position == "Nhân viên kho" || position == "Nhân viên thu ngân") {
+    User.find({ position: req.query.position })
+      .select("-password")
+      .exec(function (err, users) {
+        if (err) {
+          res.send(err);
+        } else {
+          res.send(users);
+        }
+      });
+  } else {
+    User.find({})
+      .select("-password")
+      .exec(function (err, users) {
+        if (err) {
+          res.send(err);
+        } else {
+          res.send(users);
+        }
+      });
+  }
+});
+
 // Register
 router.post("/register", multerUploads, async (req, res) => {
   const urlDefault =

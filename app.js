@@ -28,6 +28,9 @@ app.use("/api/customers", customerRouter);
 var orderRouter = require("./router/orderRouter");
 app.use("/api/orders", orderRouter);
 
+var productRouter = require("./router/productRouter");
+app.use("/api/products", productRouter);
+
 mongoose
   .connect(process.env.conectionString, {
     useNewUrlParser: true,

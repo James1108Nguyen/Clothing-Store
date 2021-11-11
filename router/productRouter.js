@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const { Category } = require("../models/product");
 const { Product } = require("../models/product");
+const { multerUploads } = require("../middlewares/multer");
+const { cloudinary } = require("../config/cloudinary");
+const getFileBuffer = require("../middlewares/getFileBuffer");
+const path = require("path");
 
 router.get("/listCategory", async (req, res) => {
   var categorys = await Category.find();
@@ -49,15 +53,24 @@ router.post("/img/updates", async (req, res) => {
     });
 });
 
-router.post("/add", async (req, res) => {
-  // console.log(req.body.newCategory);
-  // console.log(req.body.imageDisplay);
-  if (!req.body.discount) sale_price = req.body.costPrice;
-  else
-    sale_price =
-      ((100 - Number(req.body.discount)) * Number(req.body.costPrice)) / 100;
-  console.log(sale_price);
-  if (req.body.newCategory == true) {
+router.post("/deletebyId/:id");
+
+router.post("/add", multerUploads, async (req, res) => {
+  const urlDefault =
+    "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
+  if (req.file) {
+    console.log(req.file);
+    res.status(200);
+    const buffer = req.file.buffer;
+    const file = getFileBuffer(path.extname(req.file.originalname), buffer);
+
+    //upload file to clould
+    var image = await cloudinary.uploader.upload(file, {
+      folder: "Linh",
+    });
+  }
+  console.log(req.body.newCategory);
+  if (req.body.newCategory == "true") {
     console.log("Chạy new category");
     let category = Category({
       name: req.body.categoryName,
@@ -70,9 +83,9 @@ router.post("/add", async (req, res) => {
           name: req.body.name,
           costPrice: req.body.costPrice,
           discount: req.body.discount,
-          salePrice: sale_price,
+          salePrice: req.body.salePrice,
           desc: req.body.desc,
-          imageDisplay: req.body.imageDisplay,
+          imageDisplay: image ? image.url : urlDefault,
           options: req.body.options,
         });
         product.save().then((newProduct) => {
@@ -86,49 +99,94 @@ router.post("/add", async (req, res) => {
         });
       });
   } else {
+    console.log("Không thêm category");
     let product = Product({
       categoryId: req.body.categoryId,
       name: req.body.name,
       costPrice: req.body.costPrice,
       discount: req.body.discount,
-      salePrice: sale_price,
+      salePrice: req.body.salePrice,
       desc: req.body.desc,
-      imageDisplay: req.body.imageDisplay,
+      imageDisplay: image ? image.url : urlDefault,
       options: req.body.options,
     });
-    product.save().then((newProduct) => {
-      res.status(200).send(newProduct);
-    });
+    product
+      .save()
+      .then((newProduct) => {
+        res.status(200).send(newProduct);
+      })
+      .catch((err) => {
+        res.status(400).send({
+          err: err,
+          status: "Add new product failed!!",
+        });
+      });
   }
 });
 
-router.post("/updateProduct/:id", async (req, res) => {
-  console.log(req.params.id);
-  Product.findByIdAndUpdate(
-    req.params.id,
-    {
-      categoryId: req.body.categoryId,
-      name: req.body.name,
-      costPrice: req.body.costPrice,
-      discount: req.body.discount,
-      desc: req.body.desc,
-      imageDisplay: req.body.imageDisplay,
-      options: req.body.options,
-    },
-    { new: true, safe: true, upsert: true }
-  )
-    .then((result) => {
-      return res.status(201).json({
-        status: "Success",
-        data: result,
-      });
-    })
-    .catch((error) => {
-      return res.status(500).json({
-        status: "Failed",
-        data: error,
-      });
+router.post("/updateProduct/:id", multerUploads, async (req, res) => {
+  if (req.file) {
+    console.log(req.file);
+    res.status(200);
+    const buffer = req.file.buffer;
+    const file = getFileBuffer(path.extname(req.file.originalname), buffer);
+    //upload file to clould
+    var image = await cloudinary.uploader.upload(file, {
+      folder: "Linh",
     });
+  }
+  if (image) {
+    console.log("Có image");
+    Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        categoryId: req.body.categoryId,
+        name: req.body.name,
+        costPrice: req.body.costPrice,
+        discount: req.body.discount,
+        imageDisplay: image.url,
+        desc: req.body.desc,
+        options: req.body.options,
+      },
+      { new: true, safe: true }
+    )
+      .then((result) => {
+        return res.status(201).json({
+          status: "Success",
+          data: result,
+        });
+      })
+      .catch((error) => {
+        return res.status(500).json({
+          status: "Failed",
+          data: error,
+        });
+      });
+  } else
+    Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        categoryId: req.body.categoryId,
+        name: req.body.name,
+        costPrice: req.body.costPrice,
+        discount: req.body.discount,
+        desc: req.body.desc,
+        options: req.body.options,
+      },
+      { new: true, safe: true }
+    )
+      .then((result) => {
+        return res.status(201).json({
+          status: "Success",
+          data: result,
+        });
+      })
+      .catch((error) => {
+        return res.status(500).json({
+          status: "Failed",
+          data: error,
+        });
+      });
 });
 
 module.exports = router;

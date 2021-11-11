@@ -21,6 +21,7 @@ let product_Schema = new Schema({
   name: {
     type: String,
     required: true,
+    unique: true,
   },
   costPrice: {
     type: Number,
@@ -38,16 +39,13 @@ let product_Schema = new Schema({
     type: String,
     required: true,
   },
-  imageDisplay: [
-    {
-      type: String,
-    },
-  ],
+  imageDisplay: {
+    type: String,
+  },
   options: [
     {
       color: {
         type: String,
-        required: true,
       },
       size: {
         type: String,

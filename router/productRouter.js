@@ -6,6 +6,7 @@ const { multerUploads } = require("../middlewares/multer");
 const { cloudinary } = require("../config/cloudinary");
 const getFileBuffer = require("../middlewares/getFileBuffer");
 const path = require("path");
+var ObjectId = require("mongoose").Types.ObjectId;
 
 router.get("/listCategory", async (req, res) => {
   var categorys = await Category.find();
@@ -14,6 +15,43 @@ router.get("/listCategory", async (req, res) => {
   } else {
     res.status(500).send("Bad server");
   }
+});
+
+router.post("/find", (req, res) => {
+  if (ObjectId.isValid(req.body.text)) {
+    return Product.find(
+      { $or: [{ name: req.body.text }, { _id: req.body.text }] },
+      function (err, result) {
+        if (err) throw err;
+        res.status(200).send(result);
+      }
+    );
+  } else {
+    return Product.find({ name: req.body.text }, function (err, result) {
+      if (err) throw err;
+      res.status(200).send(result);
+    });
+  }
+});
+
+//List product by id
+router.get("/productByCategory", async (req, res) => {
+  await Category.aggregate(
+    [
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "categoryId",
+          as: "productList",
+        },
+      },
+    ],
+    function (err, result) {
+      if (err) res.status(500).send(err);
+      else res.status(200).send(result);
+    }
+  );
 });
 
 //Get list of products
@@ -35,7 +73,7 @@ router.post("/img/updates", async (req, res) => {
   Product.findByIdAndUpdate(
     { _id: req.body.productId },
     { $push: { imageDisplay: req.body.imageDisplay } },
-    { new: true, safe: true, upsert: true }
+    { new: true }
   )
     .then((result) => {
       return res.status(201).json({
@@ -100,6 +138,8 @@ router.post("/add", multerUploads, async (req, res) => {
       });
   } else {
     console.log("Không thêm category");
+    cata = await Category.findById(req.body.categoryId);
+    if (!cata) return res.status(500).send("Category Id không hợp lệ");
     let product = Product({
       categoryId: req.body.categoryId,
       name: req.body.name,
@@ -110,12 +150,23 @@ router.post("/add", multerUploads, async (req, res) => {
       imageDisplay: image ? image.url : urlDefault,
       options: req.body.options,
     });
-    product
+    await product
       .save()
       .then((newProduct) => {
+        console.log("Lưu thành công product mới");
         res.status(200).send(newProduct);
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        if (image) {
+          await cloudinary.uploader.destroy(
+            image.public_id,
+            function (err, result) {
+              if (err) {
+                res.status(500).send(err);
+              }
+            }
+          );
+        }
         res.status(400).send({
           err: err,
           status: "Add new product failed!!",
@@ -125,6 +176,12 @@ router.post("/add", multerUploads, async (req, res) => {
 });
 
 router.post("/updateProduct/:id", multerUploads, async (req, res) => {
+  var prd = await Product.findById(req.params.id);
+  if (!prd) {
+    console.log("Product Id incorrect!");
+    return res.status(500).send("Product Id incorrect!");
+  }
+
   if (req.file) {
     console.log(req.file);
     res.status(200);
@@ -137,7 +194,7 @@ router.post("/updateProduct/:id", multerUploads, async (req, res) => {
   }
   if (image) {
     console.log("Có image");
-    Product.findByIdAndUpdate(
+    await Product.findByIdAndUpdate(
       req.params.id,
       {
         categoryId: req.body.categoryId,
@@ -148,7 +205,7 @@ router.post("/updateProduct/:id", multerUploads, async (req, res) => {
         desc: req.body.desc,
         options: req.body.options,
       },
-      { new: true, safe: true }
+      { new: true }
     )
       .then((result) => {
         return res.status(201).json({
@@ -156,14 +213,24 @@ router.post("/updateProduct/:id", multerUploads, async (req, res) => {
           data: result,
         });
       })
-      .catch((error) => {
+      .catch(async (error) => {
+        if (image) {
+          await cloudinary.uploader.destroy(
+            image.public_id,
+            function (err, result) {
+              if (err) {
+                res.status(500).send(err);
+              }
+            }
+          );
+        }
         return res.status(500).json({
           status: "Failed",
           data: error,
         });
       });
   } else
-    Product.findByIdAndUpdate(
+    await Product.findByIdAndUpdate(
       req.params.id,
       {
         categoryId: req.body.categoryId,
@@ -173,7 +240,7 @@ router.post("/updateProduct/:id", multerUploads, async (req, res) => {
         desc: req.body.desc,
         options: req.body.options,
       },
-      { new: true, safe: true }
+      { new: true }
     )
       .then((result) => {
         return res.status(201).json({

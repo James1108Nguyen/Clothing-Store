@@ -138,9 +138,8 @@ router.post("/register", multerUploads, async (req, res) => {
 //Update User
 router.put("/updateUser/:id", multerUploads, async (req, res) => {
   console.log(req.params.id);
-  const urlDefault =
-    "https://res.cloudinary.com/hoquanglinh/image/upload/v1635330645/profile_ieghzz.jpg";
-
+  us = await User.findById(req.params.id);
+  if (!us) return res.status(500).send("User id invalid");
   if (req.file) {
     const buffer = req.file.buffer;
     const file = getFileBuffer(path.extname(req.file.originalname), buffer);
@@ -151,17 +150,31 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
     });
   }
   console.log(req.body);
-  let user = {
+  if (image) {
+    console.log("Có image");
+    var user = {
     fullname: req.body.fullname,
     phone: req.body.phone,
     address: req.body.address,
     email: req.body.email,
-    imageUrl: image ? image.url : urlDefault,
+    imageUrl: image.url,
     position: req.body.position,
     gender: req.body.gender,
     birthday: req.body.birthday || new Date(),
   };
-
+  }
+  else {    
+    console.log("Không có image");
+    var user ={
+    fullname: req.body.fullname,
+    phone: req.body.phone,
+    address: req.body.address,
+    email: req.body.email,
+    position: req.body.position,
+    gender: req.body.gender,
+    birthday: req.body.birthday || new Date(),
+  };
+  }
   User.findByIdAndUpdate(
     req.params.id,
     user,
@@ -181,6 +194,7 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
 
         res.status(400).send(err);
       } else {
+        console.log("Cập nhập user thành công")
         res.status(200).send(doc);
       }
     }

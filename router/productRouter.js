@@ -22,57 +22,113 @@ router.get("/listProduct", async (req, res) => {
   }
 });
 
-router.post("/add", async (req, res) => {
-  console.log(req.body.newCategory);
-  console.log(req.body.imageDisplay[1]);
-  Product.update(
-    { _id: "6188fbafe7188d9c4e58e575" },
-    { $push: { accounts: { name: "foo", idAccount: 123456 } } }
-  );
-  //   if (req.body.newCategory == true) {
-  //     console.log("Chạy new category");
-  //     let category = Category({
-  //       name: req.body.categoryName,
-  //     });
-  //     await category
-  //       .save()
-  //       .then((newCategory) => {
-  //         let product = Product({
-  //           categoryId: newCategory._id,
-  //           name: req.body.name,
-  //           basePrice: req.body.basePrice,
-  //           discountPrice: req.body.discountPrice,
-  //           desc: req.body.desc,
-  //           countInStock: req.body.countInStock,
-  //           size: req.body.size,
-  //           color: req.body.color,
-  //           //   Image []
-  //         });
-  //         product.save().then((newProduct) => {
-  //           res.status(200).send(newProduct);
-  //         });
-  //       })
-  //       .catch((err) => {
-  //         res.status(400).send({
-  //           err: err,
-  //           status: "Add new category failed!!",
-  //         });
-  //       });
-  //   } else {
-  //     let product = Product({
-  //       categoryId: req.body.categoryId,
-  //       name: req.body.name,
-  //       basePrice: req.body.basePrice,
-  //       discountPrice: req.body.discountPrice,
-  //       desc: req.body.desc,
-  //       countInStock: req.body.countInStock,
-  //       size: req.body.size,
-  //       color: req.body.color,
-  //       //   Image []
-  //     });
-  //     product.save().then((newProduct) => {
-  //       res.status(200).send(newProduct);
-  //     });
-  //   }
+router.post("/uploadxlsx", async (req, res) => {
+  console.log(req.file);
+  res.status(200).send("OK");
 });
+
+router.post("/img/updates", async (req, res) => {
+  Product.findByIdAndUpdate(
+    { _id: req.body.productId },
+    { $push: { imageDisplay: req.body.imageDisplay } },
+    { new: true, safe: true, upsert: true }
+  )
+    .then((result) => {
+      return res.status(201).json({
+        status: "Success",
+        message: "Successfully!",
+        data: result,
+      });
+    })
+    .catch((error) => {
+      return res.status(500).json({
+        status: "Failed",
+        message: "Database Error",
+        data: error,
+      });
+    });
+});
+
+router.post("/add", async (req, res) => {
+  // console.log(req.body.newCategory);
+  // console.log(req.body.imageDisplay);
+  if (!req.body.discount) sale_price = req.body.costPrice;
+  else
+    sale_price =
+      ((100 - Number(req.body.discount)) * Number(req.body.costPrice)) / 100;
+  console.log(sale_price);
+  if (req.body.newCategory == true) {
+    console.log("Chạy new category");
+    let category = Category({
+      name: req.body.categoryName,
+    });
+    await category
+      .save()
+      .then((newCategory) => {
+        let product = Product({
+          categoryId: newCategory._id,
+          name: req.body.name,
+          costPrice: req.body.costPrice,
+          discount: req.body.discount,
+          salePrice: sale_price,
+          desc: req.body.desc,
+          imageDisplay: req.body.imageDisplay,
+          options: req.body.options,
+        });
+        product.save().then((newProduct) => {
+          res.status(200).send(newProduct);
+        });
+      })
+      .catch((err) => {
+        res.status(400).send({
+          err: err,
+          status: "Add new category failed!!",
+        });
+      });
+  } else {
+    let product = Product({
+      categoryId: req.body.categoryId,
+      name: req.body.name,
+      costPrice: req.body.costPrice,
+      discount: req.body.discount,
+      salePrice: sale_price,
+      desc: req.body.desc,
+      imageDisplay: req.body.imageDisplay,
+      options: req.body.options,
+    });
+    product.save().then((newProduct) => {
+      res.status(200).send(newProduct);
+    });
+  }
+});
+
+router.post("/updateProduct/:id", async (req, res) => {
+  console.log(req.params.id);
+  Product.findByIdAndUpdate(
+    req.params.id,
+    {
+      categoryId: req.body.categoryId,
+      name: req.body.name,
+      costPrice: req.body.costPrice,
+      discount: req.body.discount,
+      desc: req.body.desc,
+      imageDisplay: req.body.imageDisplay,
+      options: req.body.options,
+    },
+    { new: true, safe: true, upsert: true }
+  )
+    .then((result) => {
+      return res.status(201).json({
+        status: "Success",
+        data: result,
+      });
+    })
+    .catch((error) => {
+      return res.status(500).json({
+        status: "Failed",
+        data: error,
+      });
+    });
+});
+
 module.exports = router;

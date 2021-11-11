@@ -21,36 +21,44 @@ let product_Schema = new Schema({
   name: {
     type: String,
     required: true,
-    unique: true,
   },
-  basePrice: {
+  costPrice: {
     type: Number,
     required: true,
   },
-  discountPrice: {
+  discount: {
     type: Number,
+    default: 0,
+  },
+  salePrice: {
+    type: Number,
+    required: true,
   },
   desc: {
     type: String,
     required: true,
-    unique: true,
-  },
-  countInStock: {
-    type: String,
   },
   imageDisplay: [
     {
       type: String,
     },
   ],
-  size: {
-    type: Number,
-    required: true,
-  },
-  color: {
-    type: String,
-    required: true,
-  },
+  options: [
+    {
+      color: {
+        type: String,
+        required: true,
+      },
+      size: {
+        type: String,
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+      },
+    },
+  ],
 });
 category_Schema.plugin(uniqueValidator);
 product_Schema.plugin(uniqueValidator);

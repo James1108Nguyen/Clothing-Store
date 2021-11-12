@@ -37,16 +37,15 @@ let product_Schema = new Schema({
   },
   desc: {
     type: String,
-    required: true,
   },
   imageDisplay: {
     type: String,
   },
+  qrCodeUrl: {
+    type: String,
+  },
   options: [
     {
-      color: {
-        type: String,
-      },
       size: {
         type: String,
         required: true,

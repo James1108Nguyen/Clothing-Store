@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
 const { multerUploads } = require("../middlewares/multer");
 const { cloudinary } = require("../config/cloudinary");
+const { multipleMulterUploads } = require("../middlewares/multiplefileMulter");
 const getFileBuffer = require("../middlewares/getFileBuffer");
 const path = require("path");
 //Hash Pass
@@ -112,6 +113,7 @@ router.get("/getUserByPosition/", function (req, res) {
       });
   }
 });
+//save QrImage Url
 
 // Register
 router.post("/register", multerUploads, async (req, res) => {
@@ -179,27 +181,26 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
   if (image) {
     console.log("Có image");
     var user = {
-    fullname: req.body.fullname,
-    phone: req.body.phone,
-    address: req.body.address,
-    email: req.body.email,
-    imageUrl: image.url,
-    position: req.body.position,
-    gender: req.body.gender,
-    birthday: req.body.birthday || new Date(),
-  };
-  }
-  else {    
+      fullname: req.body.fullname,
+      phone: req.body.phone,
+      address: req.body.address,
+      email: req.body.email,
+      imageUrl: image.url,
+      position: req.body.position,
+      gender: req.body.gender,
+      birthday: req.body.birthday || new Date(),
+    };
+  } else {
     console.log("Không có image");
-    var user ={
-    fullname: req.body.fullname,
-    phone: req.body.phone,
-    address: req.body.address,
-    email: req.body.email,
-    position: req.body.position,
-    gender: req.body.gender,
-    birthday: req.body.birthday || new Date(),
-  };
+    var user = {
+      fullname: req.body.fullname,
+      phone: req.body.phone,
+      address: req.body.address,
+      email: req.body.email,
+      position: req.body.position,
+      gender: req.body.gender,
+      birthday: req.body.birthday || new Date(),
+    };
   }
   User.findByIdAndUpdate(
     req.params.id,
@@ -220,7 +221,7 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
 
         res.status(400).send(err);
       } else {
-        console.log("Cập nhập user thành công")
+        console.log("Cập nhập user thành công");
         res.status(200).send(doc);
       }
     }
@@ -257,5 +258,10 @@ router.get("/filterUser/", function (req, res) {
       });
   }
 });
-
+router.post("/test", multipleMulterUploads, function (req, res) {
+  if (req) {
+    console.log(req.files[0]);
+    console.log(req.files[1]);
+  }
+});
 module.exports = router;

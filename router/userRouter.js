@@ -213,4 +213,35 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
   );
 });
 
+//filter user by name or by phone
+router.get("/filterUser/", function (req, res) {
+  const position = req.query.position;
+  const phone = req.query.phone;
+  const fullname = req.query.fullname;
+  console.log(req.query);
+  if (req.query) {
+    User.find({
+      $or: [{ position: position }, { phone: phone }, { fullname: fullname }],
+    })
+      .select("-password")
+      .exec(function (err, users) {
+        if (err) {
+          res.send(err);
+        } else {
+          res.send(users);
+        }
+      });
+  } else {
+    User.find({})
+      .select("-password")
+      .exec(function (err, users) {
+        if (err) {
+          res.send(err);
+        } else {
+          res.send(users);
+        }
+      });
+  }
+});
+
 module.exports = router;

@@ -1,8 +1,20 @@
 const multer = require("multer");
-
 const path = require("path");
+const moment = require("moment");
 
-const storage = multer.memoryStorage();
-const multerUploads = multer({ storage }).single("image");
+const storage = multer.diskStorage({
+  destination: function (req, file, callback) {
+    callback(null, "./excel/");
+  },
+  filename: function (req, file, callback) {
+    let extension = path.extname(file.originalname);
+    let basename = path.basename(file.originalname, extension);
+    console.log(file.path);
+    callback(null, moment().format() + "-" + file.originalname);
+  },
+});
 
-module.exports = { multerUploads };
+const multerUploads = multer({ storage: multer.memoryStorage }).single("image");
+const multerExcel = multer({ storage: storage }).single("file");
+
+module.exports = { multerUploads, multerExcel };

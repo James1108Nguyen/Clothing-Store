@@ -2,12 +2,18 @@ const express = require("express");
 const router = express.Router();
 const { Category } = require("../models/product");
 const { Product } = require("../models/product");
-const { multerUploads } = require("../middlewares/multer");
+const { multerUploads, multerExcel } = require("../middlewares/multer");
 const { multipleMulterUploads } = require("../middlewares/multiplefileMulter");
 const { cloudinary } = require("../config/cloudinary");
 const getFileBuffer = require("../middlewares/getFileBuffer");
 const path = require("path");
 var ObjectId = require("mongoose").Types.ObjectId;
+xlsxtojson = require("xlsx-to-json");
+xlstojson = require("xls-to-json");
+const excelToJson = require("convert-excel-to-json");
+
+const urlDefault =
+  "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
 
 router.get("/listCategory", async (req, res) => {
   var categorys = await Category.find();
@@ -65,9 +71,82 @@ router.get("/listProduct", async (req, res) => {
   }
 });
 
-router.post("/uploadxlsx", async (req, res) => {
+// Chưa xong ................
+router.post("/uploadxlsx", multerExcel, async (req, res) => {
   console.log(req.file);
-  res.status(200).send("OK");
+  const excelData = excelToJson({
+    sourceFile: "excel/2021-11-12T18:39:52+07:00-testImport product.xlsx",
+    sheets: [
+      {
+        name: "Products",
+        header: {
+          rows: 1,
+        },
+        columnToKey: {
+          A: "name",
+          B: "category",
+          C: "size",
+          D: "quantity",
+          E: "costPrice",
+          F: "discount",
+          G: "salePrice",
+          H: "description",
+        },
+      },
+    ],
+  }).Products;
+  //Log Excel Data to Console
+  console.log(excelData);
+  for (var i = 0; i < excelData.length; i++) {
+    cate = await Category.findOne({ name: excelData[i].category });
+    if (!cate) {
+      console.log("Chạy new category");
+      let category = Category({
+        name: excelData[i].category,
+      });
+      await category
+        .save()
+        .then((newCategory) => {
+          console.log("Thêm category thành công: ", newCategory);
+          let product = Product({
+            categoryId: newCategory._id,
+            name: excelData[i].name,
+            costPrice: excelData[i].costPrice,
+            discount: excelData[i].discount,
+            salePrice: excelData[i].salePrice,
+            desc: excelData[i].desc,
+            imageDisplay: urlDefault,
+            options: excelData[i].options,
+          });
+          product
+            .save()
+            .then((newProduct) => {
+              console.log("Thêm product thành công: ", newProduct);
+            })
+            .catch((err) => {
+              console.log("Thêm product thất bại!");
+              res.status(400).send(err);
+            });
+        })
+        .catch((err) => {
+          res.status(400).send({
+            err: err,
+            status: "Add new category failed!!",
+          });
+        });
+    } else {
+      console.log("Không thêm category");
+      var prd = await Product.find({
+        name: excelData[i].name,
+        size: excelData[i].size,
+      });
+      if (!prd) {
+        console.log("Đã tồn tại product và size này", prd);
+      } else {
+        console.log("Không tồn tại product và size này", prd);
+      }
+    }
+  }
 });
 
 router.post("/img/updates", async (req, res) => {
@@ -201,7 +280,6 @@ router.post("/updateProduct/:id", multerUploads, async (req, res) => {
     console.log("Product Id incorrect!");
     return res.status(500).send("Product Id incorrect!");
   }
-
   if (req.file) {
     console.log(req.file);
     res.status(200);

@@ -3,6 +3,7 @@ const router = express.Router();
 const { Category } = require("../models/product");
 const { Product } = require("../models/product");
 const { multerUploads } = require("../middlewares/multer");
+const { multipleMulterUploads } = require("../middlewares/multiplefileMulter");
 const { cloudinary } = require("../config/cloudinary");
 const getFileBuffer = require("../middlewares/getFileBuffer");
 const path = require("path");
@@ -93,21 +94,35 @@ router.post("/img/updates", async (req, res) => {
 
 router.post("/deletebyId/:id");
 
-router.post("/add", multerUploads, async (req, res) => {
+router.post("/add", multipleMulterUploads, async (req, res) => {
   const urlDefault =
     "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
-  if (req.file) {
-    console.log(req.file);
-    res.status(200);
-    const buffer = req.file.buffer;
-    const file = getFileBuffer(path.extname(req.file.originalname), buffer);
+  if (req.files) {
+    if (req.files[0]) {
+      const buffer1 = req.files[0].buffer;
+      const fileAvatar = getFileBuffer(
+        path.extname(req.files[0].originalname),
+        buffer1
+      );
+      console.log(fileAvatar);
+      //upload file to clould
+      var image = await cloudinary.uploader.upload(fileAvatar, {
+        folder: "Linh",
+      });
+    }
+    if (req.files[1]) {
+      const buffer2 = req.files[1].buffer;
 
-    //upload file to clould
-    var image = await cloudinary.uploader.upload(file, {
-      folder: "Linh",
-    });
+      const fileQrCode = getFileBuffer(
+        path.extname(req.files[1].originalname),
+        buffer2
+      );
+      var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+        folder: "Linh",
+      });
+    }
   }
-  console.log(req.body.newCategory);
+
   if (req.body.newCategory == "true") {
     console.log("Chạy new category");
     let category = Category({
@@ -124,6 +139,7 @@ router.post("/add", multerUploads, async (req, res) => {
           salePrice: req.body.salePrice,
           desc: req.body.desc,
           imageDisplay: image ? image.url : urlDefault,
+          qrCodeImage: qrCodeImage ? qrCodeImage.url : "",
           options: req.body.options,
         });
         product.save().then((newProduct) => {
@@ -131,6 +147,7 @@ router.post("/add", multerUploads, async (req, res) => {
         });
       })
       .catch((err) => {
+        console.log(err);
         res.status(400).send({
           err: err,
           status: "Add new category failed!!",
@@ -147,7 +164,9 @@ router.post("/add", multerUploads, async (req, res) => {
       discount: req.body.discount,
       salePrice: req.body.salePrice,
       desc: req.body.desc,
+
       imageDisplay: image ? image.url : urlDefault,
+      qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
       options: req.body.options,
     });
     await product
@@ -157,6 +176,7 @@ router.post("/add", multerUploads, async (req, res) => {
         res.status(200).send(newProduct);
       })
       .catch(async (err) => {
+        console.log(err);
         if (image) {
           await cloudinary.uploader.destroy(
             image.public_id,

@@ -16,7 +16,9 @@ const urlDefault =
   "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
 
 router.get("/listCategory", async (req, res) => {
-  var categorys = await Category.find();
+  const name = req.query.name;
+
+  var categorys = await Category.find({ name: new RegExp("^" + name, "i") });
   if (categorys) {
     res.status(200).send(categorys);
   } else {
@@ -25,40 +27,72 @@ router.get("/listCategory", async (req, res) => {
 });
 
 router.post("/find", (req, res) => {
+  const text = req.body.searchText;
   if (ObjectId.isValid(req.body.text)) {
     return Product.find(
-      { $or: [{ name: req.body.text }, { _id: req.body.text }] },
+      {
+        $or: [{ name: new RegExp(text, "i") }, { _id: req.body.text }],
+      },
+      function (err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.status(200).send(result);
+      }
+    );
+  } else {
+    return Product.find(
+      { name: new RegExp(text, "i") },
       function (err, result) {
         if (err) throw err;
         res.status(200).send(result);
       }
     );
-  } else {
-    return Product.find({ name: req.body.text }, function (err, result) {
-      if (err) throw err;
-      res.status(200).send(result);
-    });
   }
 });
 
 //List product by id
-router.get("/productByCategory", async (req, res) => {
-  await Category.aggregate(
-    [
-      {
-        $lookup: {
-          from: "products",
-          localField: "_id",
-          foreignField: "categoryId",
-          as: "productList",
+router.get("/productByCategory/", async (req, res) => {
+  const category = req.query.category;
+  if (category == "all") {
+    await Category.aggregate(
+      [
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "categoryId",
+            as: "productList",
+          },
         },
-      },
-    ],
-    function (err, result) {
-      if (err) res.status(500).send(err);
-      else res.status(200).send(result);
-    }
-  );
+      ],
+      function (err, result) {
+        if (err) return res.status(500).send(err);
+        else return res.status(200).send(result);
+      }
+    );
+  } else {
+    await Category.aggregate(
+      [
+        {
+          $match: {
+            name: category,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "categoryId",
+            as: "productList",
+          },
+        },
+      ],
+      function (err, result) {
+        if (err) return res.status(500).send(err);
+        else return res.status(200).send(result);
+      }
+    );
+  }
 });
 
 //Get list of products

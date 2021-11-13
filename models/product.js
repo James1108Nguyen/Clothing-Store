@@ -59,5 +59,6 @@ let product_Schema = new Schema({
 });
 category_Schema.plugin(uniqueValidator);
 product_Schema.plugin(uniqueValidator);
+
 exports.Category = mongoose.model("Category", category_Schema);
 exports.Product = mongoose.model("Product", product_Schema);

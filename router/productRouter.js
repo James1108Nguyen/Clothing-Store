@@ -48,34 +48,50 @@ router.post("/find", (req, res) => {
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
   if (category == "all") {
-    var products = await Product.find();
-    if (products) {
-      return res.status(200).send(products);
-    } else {
-      return res.status(500).send("Bad server");
-    }
+    await Category.aggregate(
+      [
+        {
+          $match: {
+            name: category,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "categoryId",
+            as: "productList",
+          },
+        },
+      ],
+      function (err, result) {
+        if (err) return res.status(500).send(err);
+        else return res.status(200).send(result);
+      }
+    );
+  } else {
+    await Category.aggregate(
+      [
+        {
+          $match: {
+            name: category,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "categoryId",
+            as: "productList",
+          },
+        },
+      ],
+      function (err, result) {
+        if (err) return res.status(500).send(err);
+        else return res.status(200).send(result);
+      }
+    );
   }
-  await Category.aggregate(
-    [
-      {
-        $match: {
-          name: category,
-        },
-      },
-      {
-        $lookup: {
-          from: "products",
-          localField: "_id",
-          foreignField: "categoryId",
-          as: "productList",
-        },
-      },
-    ],
-    function (err, result) {
-      if (err) res.status(500).send(err);
-      else res.status(200).send(result);
-    }
-  );
 });
 
 //Get list of products

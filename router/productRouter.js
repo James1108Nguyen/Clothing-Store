@@ -47,7 +47,14 @@ router.post("/find", (req, res) => {
 //List product by id
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
-
+  if (category == "all") {
+    var products = await Product.find();
+    if (products) {
+      return res.status(200).send(products);
+    } else {
+      return res.status(500).send("Bad server");
+    }
+  }
   await Category.aggregate(
     [
       {

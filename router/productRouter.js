@@ -10,7 +10,9 @@ const path = require("path");
 var ObjectId = require("mongoose").Types.ObjectId;
 
 router.get("/listCategory", async (req, res) => {
-  var categorys = await Category.find();
+  const name = req.query.name;
+
+  var categorys = await Category.find({ name: new RegExp("^" + name, "i") });
   if (categorys) {
     res.status(200).send(categorys);
   } else {
@@ -19,26 +21,40 @@ router.get("/listCategory", async (req, res) => {
 });
 
 router.post("/find", (req, res) => {
+  const text = req.body.searchText;
   if (ObjectId.isValid(req.body.text)) {
     return Product.find(
-      { $or: [{ name: req.body.text }, { _id: req.body.text }] },
+      {
+        $or: [{ name: new RegExp(text, "i") }, { _id: req.body.text }],
+      },
+      function (err, result) {
+        if (err) throw err;
+        console.log(result);
+        res.status(200).send(result);
+      }
+    );
+  } else {
+    return Product.find(
+      { name: new RegExp(text, "i") },
       function (err, result) {
         if (err) throw err;
         res.status(200).send(result);
       }
     );
-  } else {
-    return Product.find({ name: req.body.text }, function (err, result) {
-      if (err) throw err;
-      res.status(200).send(result);
-    });
   }
 });
 
 //List product by id
-router.get("/productByCategory", async (req, res) => {
+router.get("/productByCategory/", async (req, res) => {
+  const category = req.query.category;
+
   await Category.aggregate(
     [
+      {
+        $match: {
+          name: category,
+        },
+      },
       {
         $lookup: {
           from: "products",

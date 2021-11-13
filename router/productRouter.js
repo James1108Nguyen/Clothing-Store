@@ -51,11 +51,6 @@ router.get("/productByCategory/", async (req, res) => {
     await Category.aggregate(
       [
         {
-          $match: {
-            name: category,
-          },
-        },
-        {
           $lookup: {
             from: "products",
             localField: "_id",

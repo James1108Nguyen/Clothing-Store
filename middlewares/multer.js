@@ -4,7 +4,7 @@ const moment = require("moment");
 
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
-    callback(null, "./excel/");
+    callback(null, "./file/excel");
   },
   filename: function (req, file, callback) {
     let extension = path.extname(file.originalname);

@@ -309,7 +309,7 @@ router.post("/img/updates", async (req, res) => {
 });
 
 //Delete some products by Id
-router.post("/deleteSomebyId", async (req, res) => {
+router.delete("/deleteSomebyId", async (req, res) => {
   console.log(req.body);
   console.log(req.body.id.length);
   ids = req.body.id;
@@ -331,7 +331,7 @@ router.post("/deleteSomebyId", async (req, res) => {
 });
 
 //Delete product by Id
-router.post("/deleteOnebyId/:id", async (req, res) => {
+router.delete("/deleteOnebyId/:id", async (req, res) => {
   await Product.findByIdAndRemove(req.params.id)
     .then((result) => {
       console.log("Removed Product: ", result);

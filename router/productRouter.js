@@ -19,7 +19,6 @@ const urlDefault =
 
 router.get("/listCategory", async (req, res) => {
   const name = req.query.name;
-
   var categories = await Category.find({ name: new RegExp("^" + name, "i") });
   if (categories) {
     res.status(200).send(categories);
@@ -108,29 +107,39 @@ router.get("/listProduct", async (req, res) => {
 
 // Done
 router.post("/import", multerExcel, async (req, res) => {
-  console.log(req.file);
-  const excelData = excelToJson({
-    sourceFile: req.file.path,
-    sheets: [
-      {
-        name: "Products",
-        header: {
-          rows: 1,
+  try {
+    const excelData = excelToJson({
+      sourceFile: req.file.path,
+      sheets: [
+        {
+          name: "Products",
+          header: {
+            rows: 1,
+          },
+          columnToKey: {
+            A: "name",
+            B: "category",
+            C: "size",
+            D: "quantity",
+            E: "costPrice",
+            F: "discount",
+            G: "salePrice",
+            H: "description",
+          },
         },
-        columnToKey: {
-          A: "name",
-          B: "category",
-          C: "size",
-          D: "quantity",
-          E: "costPrice",
-          F: "discount",
-          G: "salePrice",
-          H: "description",
-        },
-      },
-    ],
-  }).Products;
+      ],
+    }).Products;
+    if (excelData.length == 0)
+      return res
+        .status(500)
+        .send("File không có dữ liệu hoặc không đúng định dạng!!");
+  } catch {
+    return res
+      .status(500)
+      .send("File không có dữ liệu hoặc không đúng định dạng!!");
+  }
   //Import data
+
   for (var i = 0; i < excelData.length; i++) {
     let cate = await Category.findOne({ name: excelData[i].category });
     if (!cate) {
@@ -304,7 +313,7 @@ router.post("/import", multerExcel, async (req, res) => {
       }
     }
   }
-
+  //Xóa file sau xử lý
   await fs.unlink(req.file.path, (err) => {
     if (err) throw err;
     console.log("Successfully delete file excel!!");

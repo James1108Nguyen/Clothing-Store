@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
+
 const { Category } = require("../models/product");
 const { Product } = require("../models/product");
+const generateQR = require("../middlewares/gererateQR");
 const { multerUploads, multerExcel } = require("../middlewares/multer");
 const { multipleMulterUploads } = require("../middlewares/multiplefileMulter");
 const { cloudinary } = require("../config/cloudinary");
@@ -10,6 +12,7 @@ const path = require("path");
 var ObjectId = require("mongoose").Types.ObjectId;
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs");
+const { send } = require("process");
 
 const urlDefault =
   "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
@@ -140,6 +143,17 @@ router.post("/import", multerExcel, async (req, res) => {
         .save()
         .then(async (newCategory) => {
           console.log("Thêm category thành công: ", newCategory);
+
+          const fileQrCode = await generateQR(
+            JSON.stringify({
+              name: excelData[i].name,
+              salePrice: excelData[i].salePrice,
+              discount: excelData[i].discount,
+            })
+          );
+          const qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+            folder: "Linh",
+          });
           let product = Product({
             categoryId: newCategory._id,
             name: excelData[i].name,
@@ -148,6 +162,7 @@ router.post("/import", multerExcel, async (req, res) => {
             salePrice: excelData[i].salePrice,
             desc: excelData[i].description,
             imageDisplay: urlDefault,
+            qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
             options: [
               {
                 size: excelData[i].size,
@@ -238,6 +253,16 @@ router.post("/import", multerExcel, async (req, res) => {
               console.log("Push size mới thành công:", excelData[i]);
               console.log("Sản phẩm sau cập nhật:", result);
             } else {
+              const fileQrCode = await generateQR(
+                JSON.stringify({
+                  name: excelData[i].name,
+                  salePrice: excelData[i].salePrice,
+                  discount: excelData[i].discount,
+                })
+              );
+              const qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+                folder: "Linh",
+              });
               console.log("Không tồn tại product name này => tạo product mới");
               let product = Product({
                 categoryId: cate._id,
@@ -247,6 +272,7 @@ router.post("/import", multerExcel, async (req, res) => {
                 salePrice: excelData[i].salePrice,
                 desc: excelData[i].description,
                 imageDisplay: urlDefault,
+                qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
                 options: [
                   {
                     size: excelData[i].size,
@@ -279,11 +305,12 @@ router.post("/import", multerExcel, async (req, res) => {
       }
     }
   }
-  res.status(200).send("Import dữ liệu thành công");
+
   await fs.unlink(req.file.path, (err) => {
     if (err) throw err;
     console.log("Successfully delete file excel!!");
   });
+  return res.status(200).send("Import dữ liệu thành công");
 });
 
 router.post("/img/updates", async (req, res) => {
@@ -343,34 +370,33 @@ router.delete("/deleteOnebyId/:id", async (req, res) => {
     });
 });
 
-router.post("/add", multipleMulterUploads, async (req, res) => {
+router.post("/add", multerUploads, async (req, res) => {
+  const fileQrCode = await generateQR(
+    JSON.stringify({
+      name: req.body.name,
+      salePrice: req.body.salePrice,
+      discount: req.body.discount,
+    })
+  );
   const urlDefault =
     "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
-  if (req.files) {
-    if (req.files[0]) {
-      const buffer1 = req.files[0].buffer;
-      const fileAvatar = getFileBuffer(
-        path.extname(req.files[0].originalname),
-        buffer1
-      );
-      console.log(fileAvatar);
-      //upload file to clould
-      var image = await cloudinary.uploader.upload(fileAvatar, {
-        folder: "Linh",
-      });
-    }
-    if (req.files[1]) {
-      const buffer2 = req.files[1].buffer;
+  if (req.file) {
+    const buffer = req.file.buffer;
+    const fileAvatar = getFileBuffer(
+      path.extname(req.file.originalname),
+      buffer
+    );
+    console.log(fileAvatar);
 
-      const fileQrCode = getFileBuffer(
-        path.extname(req.files[1].originalname),
-        buffer2
-      );
-      var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
-        folder: "Linh",
-      });
-    }
+    //upload file to clould
+    var image = await cloudinary.uploader.upload(fileAvatar, {
+      folder: "Linh",
+    });
   }
+
+  var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+    folder: "Linh",
+  });
 
   if (req.body.newCategory == "true") {
     console.log("Chạy new category");
@@ -388,7 +414,7 @@ router.post("/add", multipleMulterUploads, async (req, res) => {
           salePrice: req.body.salePrice,
           desc: req.body.desc,
           imageDisplay: image ? image.url : urlDefault,
-          qrCodeImage: qrCodeImage ? qrCodeImage.url : "",
+          qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
           options: req.body.options,
         });
         product.save().then((newProduct) => {
@@ -435,6 +461,14 @@ router.post("/add", multipleMulterUploads, async (req, res) => {
               }
             }
           );
+          await cloudinary.uploader.destroy(
+            qrCodeImage.public_id,
+            function (err, result) {
+              if (err) {
+                res.status(500).send(err);
+              }
+            }
+          );
         }
         res.status(400).send({
           err: err,
@@ -444,84 +478,56 @@ router.post("/add", multipleMulterUploads, async (req, res) => {
   }
 });
 
-router.post("/updateProduct/:id", multerUploads, async (req, res) => {
+router.put("/updateProduct/:id", multerUploads, async (req, res) => {
   var prd = await Product.findById(req.params.id);
+
+  var fieldToUpdate = {};
   if (!prd) {
     console.log("Product Id incorrect!");
     return res.status(500).send("Product Id incorrect!");
   }
+  //if have image, update image
   if (req.file) {
-    console.log(req.file);
-    res.status(200);
     const buffer = req.file.buffer;
-    const file = getFileBuffer(path.extname(req.file.originalname), buffer);
-    //upload file to clould
-    var image = await cloudinary.uploader.upload(file, {
+    const fileImageDisplay = getFileBuffer(
+      path.extname(req.file.originalname),
+      buffer
+    );
+    var imageDisplay = await cloudinary.uploader.upload(fileImageDisplay, {
       folder: "Linh",
     });
+    fieldToUpdate = { ...fieldToUpdate, imageDisplay: imageDisplay.url };
   }
-  if (image) {
-    console.log("Có image");
-    await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        categoryId: req.body.categoryId,
-        name: req.body.name,
-        costPrice: req.body.costPrice,
-        discount: req.body.discount,
-        imageDisplay: image.url,
-        desc: req.body.desc,
-        options: req.body.options,
-      },
-      { new: true }
-    )
-      .then((result) => {
-        return res.status(201).json({
-          status: "Success",
-          data: result,
-        });
-      })
-      .catch(async (error) => {
-        if (image) {
-          await cloudinary.uploader.destroy(
-            image.public_id,
-            function (err, result) {
-              if (err) {
-                res.status(500).send(err);
-              }
-            }
-          );
-        }
-        return res.status(500).json({
-          status: "Failed",
-          data: error,
-        });
-      });
-  } else
-    await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        categoryId: req.body.categoryId,
-        name: req.body.name,
-        costPrice: req.body.costPrice,
-        discount: req.body.discount,
-        desc: req.body.desc,
-        options: req.body.options,
-      },
-      { new: true }
-    )
-      .then((result) => {
-        return res.status(201).json({
-          status: "Success",
-          data: result,
-        });
-      })
-      .catch((error) => {
-        return res.status(500).json({
-          status: "Failed",
-          data: error,
-        });
-      });
+  //If name exist on system=> no create QR code, else create QR code
+  if (req.body.name && prd.name !== req.body.name) {
+    const fileQrCode = await generateQR(
+      `${req.body.name} ${req.body.salePrice} ${req.body.discount}`
+    );
+    var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+      folder: "Linh",
+    });
+    const qrCodeUrl = qrCodeImage.url;
+    const name = req.body.name;
+    fieldToUpdate = { ...fieldToUpdate, qrCodeUrl, name };
+  }
+
+  fieldToUpdate = {
+    ...fieldToUpdate,
+    costPrice: req.body.costPrice || prd.costPrice,
+    salePrice: req.body.salePrice || prd.salePrice,
+    discount: req.body.discount || prd.discount,
+    desc: req.body.desc || prd.desc,
+    options: req.body.options || prd.options,
+  };
+  const filter = { _id: req.params.id };
+  console.log(req.params.id);
+  // console.log(fieldToUpdate);
+  Product.findOneAndUpdate(filter, fieldToUpdate, { new: true }, (err, doc) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    return res.status(200).send(doc);
+  });
 });
 
 router.post("/test", async (req, res) => {

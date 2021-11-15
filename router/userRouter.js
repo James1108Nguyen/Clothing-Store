@@ -123,7 +123,7 @@ router.post("/register", multerUploads, async (req, res) => {
   if (req.file) {
     const buffer = req.file.buffer;
     const file = getFileBuffer(path.extname(req.file.originalname), buffer);
-
+    console.log(file);
     //upload file to clould
     var image = await cloudinary.uploader.upload(file, {
       folder: "Linh",
@@ -208,17 +208,6 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
     { new: true },
     async function (err, doc) {
       if (err) {
-        if (image) {
-          await cloudinary.uploader.destroy(
-            image.public_id,
-            function (err, result) {
-              if (err) {
-                res.status(500).send(err);
-              }
-            }
-          );
-        }
-
         res.status(400).send(err);
       } else {
         console.log("Cập nhập user thành công");

@@ -10,11 +10,16 @@ const storage = multer.diskStorage({
     let extension = path.extname(file.originalname);
     let basename = path.basename(file.originalname, extension);
     console.log(file.path);
-    callback(null, moment().format() + "-" + file.originalname);
+    callback(
+      null,
+      moment().format().replace(/:/g, "-") + "-" + file.originalname
+    );
   },
 });
 
-const multerUploads = multer({ storage: multer.memoryStorage }).single("image");
+const multerUploads = multer({ storage: multer.memoryStorage() }).single(
+  "image"
+);
 const multerExcel = multer({ storage: storage }).single("file");
 
 module.exports = { multerUploads, multerExcel };

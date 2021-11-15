@@ -107,6 +107,14 @@ router.get("/listProduct", async (req, res) => {
 
 // Done
 router.post("/import", multerExcel, async (req, res) => {
+  //Xóa file sau xử lý
+  async function deleteFile() {
+    await fs.unlink(req.file.path, (err) => {
+      if (err) throw err;
+      return console.log("Successfully delete file excel!!");
+    });
+    return;
+  }
   try {
     const excelData = excelToJson({
       sourceFile: req.file.path,
@@ -129,11 +137,14 @@ router.post("/import", multerExcel, async (req, res) => {
         },
       ],
     }).Products;
-    if (excelData.length == 0)
+    if (excelData.length == 0) {
+      deleteFile();
       return res
         .status(500)
         .send("File không có dữ liệu hoặc không đúng định dạng!!");
+    }
   } catch {
+    deleteFile();
     return res
       .status(500)
       .send("File không có dữ liệu hoặc không đúng định dạng!!");
@@ -313,11 +324,7 @@ router.post("/import", multerExcel, async (req, res) => {
       }
     }
   }
-  //Xóa file sau xử lý
-  await fs.unlink(req.file.path, (err) => {
-    if (err) throw err;
-    console.log("Successfully delete file excel!!");
-  });
+  deleteFile();
   return res.status(200).send("Import dữ liệu thành công");
 });
 

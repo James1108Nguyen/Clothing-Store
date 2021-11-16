@@ -20,17 +20,9 @@ const urlDefault =
 router.get("/listCategory", async (req, res) => {
   const name = req.query.name;
 
-  var categories = await Category.find({ name: new RegExp("^" + name, "i") });
-  if (categories) {
-    res.status(200).send(categories);
-  } else {
-    res.status(500).send("Bad server");
-  }
-});
-router.get("/getAllCategories", async function (req, res) {
-  var categories = await Category.find();
-  if (categories) {
-    res.status(200).send(categories);
+  var categorys = await Category.find({ name: new RegExp("^" + name, "i") });
+  if (categorys) {
+    res.status(200).send(categorys);
   } else {
     res.status(500).send("Bad server");
   }
@@ -63,14 +55,23 @@ router.post("/find", (req, res) => {
 //List product by id
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
-  const name = req.query.name;
   if (category == "all") {
-    var products = await Product.find({ name: new RegExp(name, "i") });
-    if (products) {
-      res.status(200).send([{ productList: products }]);
-    } else {
-      res.status(500).send("Bad server");
-    }
+    await Category.aggregate(
+      [
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "categoryId",
+            as: "productList",
+          },
+        },
+      ],
+      function (err, result) {
+        if (err) return res.status(500).send(err);
+        else return res.status(200).send(result);
+      }
+    );
   } else {
     await Category.aggregate(
       [
@@ -385,7 +386,6 @@ router.post("/add", multerUploads, async (req, res) => {
       path.extname(req.file.originalname),
       buffer
     );
-    console.log(fileAvatar);
 
     //upload file to clould
     var image = await cloudinary.uploader.upload(fileAvatar, {
@@ -500,7 +500,11 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
   //If name exist on system=> no create QR code, else create QR code
   if (req.body.name && prd.name !== req.body.name) {
     const fileQrCode = await generateQR(
-      `${req.body.name} ${req.body.salePrice} ${req.body.discount}`
+      JSON.stringify({
+        name: req.body.name,
+        salePrice: req.body.salePrice,
+        discount: req.body.discount,
+      })
     );
     var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
       folder: "Linh",

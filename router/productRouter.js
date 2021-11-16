@@ -62,23 +62,14 @@ router.post("/find", (req, res) => {
 //List product by id
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
+  const name = req.query.name;
   if (category == "all") {
-    await Category.aggregate(
-      [
-        {
-          $lookup: {
-            from: "products",
-            localField: "_id",
-            foreignField: "categoryId",
-            as: "productList",
-          },
-        },
-      ],
-      function (err, result) {
-        if (err) return res.status(500).send(err);
-        else return res.status(200).send(result);
-      }
-    );
+    var products = await Product.find({ name: new RegExp(name, "i") });
+    if (products) {
+      res.status(200).send([{ productList: products }]);
+    } else {
+      res.status(500).send("Bad server");
+    }
   } else {
     await Category.aggregate(
       [

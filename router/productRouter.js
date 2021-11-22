@@ -62,9 +62,9 @@ router.post("/find", (req, res) => {
 //List product by id
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
-  const name = req.query.name;
+
   if (category == "all") {
-    var products = await Product.find({ name: new RegExp(name, "i") });
+    var products = await Product.find();
     if (products) {
       res.status(200).send([{ productList: products }]);
     } else {

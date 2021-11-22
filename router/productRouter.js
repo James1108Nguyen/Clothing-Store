@@ -544,6 +544,7 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
     discount: req.body.discount || prd.discount,
     desc: req.body.desc || prd.desc,
     options: req.body.options || prd.options,
+    categoryId: req.body.categoryId || prd.categoryId,
   };
   const filter = { _id: req.params.id };
   console.log(req.params.id);

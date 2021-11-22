@@ -63,7 +63,7 @@ router.post("/find", (req, res) => {
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
 
-  if (category == "all") {
+  if (category == "Tất cả") {
     var products = await Product.find();
     if (products) {
       res.status(200).send([{ productList: products }]);

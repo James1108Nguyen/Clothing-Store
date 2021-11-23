@@ -62,9 +62,9 @@ router.post("/find", (req, res) => {
 //List product by id
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
-  const name = req.query.name;
-  if (category == "all") {
-    var products = await Product.find({ name: new RegExp(name, "i") });
+
+  if (category == "Tất cả" || category == "all") {
+    var products = await Product.find();
     if (products) {
       res.status(200).send([{ productList: products }]);
     } else {
@@ -107,6 +107,7 @@ router.get("/listProduct", async (req, res) => {
 
 // Done
 router.post("/import", multerExcel, async (req, res) => {
+  console.log(req.file);
   //Xóa file sau xử lý
   async function deleteFile() {
     await fs.unlink(req.file.path, (err) => {
@@ -116,7 +117,7 @@ router.post("/import", multerExcel, async (req, res) => {
     return;
   }
   try {
-    const excelData = excelToJson({
+    const excelData = await excelToJson({
       sourceFile: req.file.path,
       sheets: [
         {
@@ -137,195 +138,202 @@ router.post("/import", multerExcel, async (req, res) => {
         },
       ],
     }).Products;
+    console.log(excelData);
     if (excelData.length == 0) {
       deleteFile();
       return res
         .status(500)
         .send("File không có dữ liệu hoặc không đúng định dạng!!");
     }
+
+    //Import data
+
+    for (var i = 0; i < excelData.length; i++) {
+      let cate = await Category.findOne({ name: excelData[i].category });
+      if (!cate) {
+        console.log("Chạy new category");
+        let category = Category({
+          name: excelData[i].category,
+        });
+        await category
+          .save()
+          .then(async (newCategory) => {
+            console.log("Thêm category thành công: ", newCategory);
+
+            const fileQrCode = await generateQR(
+              JSON.stringify({
+                name: excelData[i].name,
+                salePrice: excelData[i].salePrice,
+                discount: excelData[i].discount,
+              })
+            );
+            const qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+              folder: "Linh",
+            });
+            let product = Product({
+              categoryId: newCategory._id,
+              name: excelData[i].name,
+              costPrice: excelData[i].costPrice,
+              discount: excelData[i].discount,
+              salePrice: excelData[i].salePrice,
+              desc: excelData[i].description,
+              imageDisplay: urlDefault,
+              qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
+              options: [
+                {
+                  size: excelData[i].size,
+                  quantity: excelData[i].quantity,
+                },
+              ],
+            });
+            await product
+              .save()
+              .then((newProduct) => {
+                console.log("Thêm product thành công: ", newProduct);
+              })
+              .catch((err) => {
+                return res.status(500).json({
+                  status: "Add product failed!!",
+                  excelRow: i,
+                  err: err,
+                });
+              });
+          })
+          .catch((err) => {
+            return res.status(500).json({
+              status: "Add new category failed!!",
+              excelRow: i,
+              err: err,
+            });
+          });
+      } else {
+        console.log("Không thêm category");
+        let prd = await Product.findOne({
+          name: excelData[i].name,
+          "options.size": excelData[i].size,
+        });
+        if (prd) {
+          //Cập nhật số lượng size
+          console.log(
+            "Đã tồn tại product và size này => Cập nhật số lượng của size"
+          );
+          await Product.findOneAndUpdate(
+            { _id: prd._id, "options.size": excelData[i].size },
+            {
+              $set: {
+                "options.$.quantity":
+                  prd.options.filter(function (prd) {
+                    return prd.size === excelData[i].size;
+                  })[0].quantity + excelData[i].quantity,
+              },
+            },
+            { new: true }
+          )
+            .then((result) => {
+              console.log("Product sau cập nhật: ", result);
+            })
+            .catch((err) => {
+              console.log(
+                "Cập nhật quantity thất bại:",
+                excelData[i].name,
+                excelData[i].size
+              );
+              return res.status(500).json({
+                status: "Update quantity failed",
+                excelRow: i,
+                err: err,
+              });
+            });
+        } else {
+          console.log(
+            "Không tồn tại product và size này",
+            excelData[i].name,
+            "  ",
+            excelData[i].size
+          );
+          console.log("=>Thêm");
+          await Product.findOneAndUpdate(
+            { name: excelData[i].name },
+            {
+              $push: {
+                options: {
+                  size: excelData[i].size,
+                  quantity: excelData[i].quantity,
+                },
+              },
+            },
+            { new: true }
+          )
+            .then(async (result) => {
+              if (result) {
+                console.log("Push size mới thành công:", excelData[i]);
+                console.log("Sản phẩm sau cập nhật:", result);
+              } else {
+                const fileQrCode = await generateQR(
+                  JSON.stringify({
+                    name: excelData[i].name,
+                    salePrice: excelData[i].salePrice,
+                    discount: excelData[i].discount,
+                  })
+                );
+                const qrCodeImage = await cloudinary.uploader.upload(
+                  fileQrCode,
+                  {
+                    folder: "Linh",
+                  }
+                );
+                console.log(
+                  "Không tồn tại product name này => tạo product mới"
+                );
+                let product = Product({
+                  categoryId: cate._id,
+                  name: excelData[i].name,
+                  costPrice: excelData[i].costPrice,
+                  discount: excelData[i].discount,
+                  salePrice: excelData[i].salePrice,
+                  desc: excelData[i].description,
+                  imageDisplay: urlDefault,
+                  qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
+                  options: [
+                    {
+                      size: excelData[i].size,
+                      quantity: excelData[i].quantity,
+                    },
+                  ],
+                });
+                await product
+                  .save()
+                  .then((newProduct) => {
+                    console.log("Thêm product mới thành công: ", newProduct);
+                  })
+                  .catch((err) => {
+                    console.log("Thêm product mới thất bại!");
+                    return res.status(500).json({
+                      status: "Add new product failed!!",
+                      excelRow: i,
+                      err: err,
+                    });
+                  });
+              }
+            })
+            .catch(async (error) => {
+              return res.status(500).json({
+                status: "Push new size failed!! ",
+                excelRow: i,
+                err: error,
+              });
+            });
+        }
+      }
+    }
+    deleteFile();
+    return res.status(200).send("Import dữ liệu thành công");
   } catch {
     deleteFile();
     return res
       .status(500)
       .send("File không có dữ liệu hoặc không đúng định dạng!!");
   }
-  //Import data
-
-  for (var i = 0; i < excelData.length; i++) {
-    let cate = await Category.findOne({ name: excelData[i].category });
-    if (!cate) {
-      console.log("Chạy new category");
-      let category = Category({
-        name: excelData[i].category,
-      });
-      await category
-        .save()
-        .then(async (newCategory) => {
-          console.log("Thêm category thành công: ", newCategory);
-
-          const fileQrCode = await generateQR(
-            JSON.stringify({
-              name: excelData[i].name,
-              salePrice: excelData[i].salePrice,
-              discount: excelData[i].discount,
-            })
-          );
-          const qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
-            folder: "Linh",
-          });
-          let product = Product({
-            categoryId: newCategory._id,
-            name: excelData[i].name,
-            costPrice: excelData[i].costPrice,
-            discount: excelData[i].discount,
-            salePrice: excelData[i].salePrice,
-            desc: excelData[i].description,
-            imageDisplay: urlDefault,
-            qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
-            options: [
-              {
-                size: excelData[i].size,
-                quantity: excelData[i].quantity,
-              },
-            ],
-          });
-          await product
-            .save()
-            .then((newProduct) => {
-              console.log("Thêm product thành công: ", newProduct);
-            })
-            .catch((err) => {
-              return res.status(500).json({
-                status: "Add product failed!!",
-                excelRow: i,
-                err: err,
-              });
-            });
-        })
-        .catch((err) => {
-          return res.status(500).json({
-            status: "Add new category failed!!",
-            excelRow: i,
-            err: err,
-          });
-        });
-    } else {
-      console.log("Không thêm category");
-      let prd = await Product.findOne({
-        name: excelData[i].name,
-        "options.size": excelData[i].size,
-      });
-      if (prd) {
-        //Cập nhật số lượng size
-        console.log(
-          "Đã tồn tại product và size này => Cập nhật số lượng của size"
-        );
-        await Product.findOneAndUpdate(
-          { _id: prd._id, "options.size": excelData[i].size },
-          {
-            $set: {
-              "options.$.quantity":
-                prd.options.filter(function (prd) {
-                  return prd.size === excelData[i].size;
-                })[0].quantity + excelData[i].quantity,
-            },
-          },
-          { new: true }
-        )
-          .then((result) => {
-            console.log("Product sau cập nhật: ", result);
-          })
-          .catch((err) => {
-            console.log(
-              "Cập nhật quantity thất bại:",
-              excelData[i].name,
-              excelData[i].size
-            );
-            return res.status(500).json({
-              status: "Update quantity failed",
-              excelRow: i,
-              err: err,
-            });
-          });
-      } else {
-        console.log(
-          "Không tồn tại product và size này",
-          excelData[i].name,
-          "  ",
-          excelData[i].size
-        );
-        console.log("=>Thêm");
-        await Product.findOneAndUpdate(
-          { name: excelData[i].name },
-          {
-            $push: {
-              options: {
-                size: excelData[i].size,
-                quantity: excelData[i].quantity,
-              },
-            },
-          },
-          { new: true }
-        )
-          .then(async (result) => {
-            if (result) {
-              console.log("Push size mới thành công:", excelData[i]);
-              console.log("Sản phẩm sau cập nhật:", result);
-            } else {
-              const fileQrCode = await generateQR(
-                JSON.stringify({
-                  name: excelData[i].name,
-                  salePrice: excelData[i].salePrice,
-                  discount: excelData[i].discount,
-                })
-              );
-              const qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
-                folder: "Linh",
-              });
-              console.log("Không tồn tại product name này => tạo product mới");
-              let product = Product({
-                categoryId: cate._id,
-                name: excelData[i].name,
-                costPrice: excelData[i].costPrice,
-                discount: excelData[i].discount,
-                salePrice: excelData[i].salePrice,
-                desc: excelData[i].description,
-                imageDisplay: urlDefault,
-                qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
-                options: [
-                  {
-                    size: excelData[i].size,
-                    quantity: excelData[i].quantity,
-                  },
-                ],
-              });
-              await product
-                .save()
-                .then((newProduct) => {
-                  console.log("Thêm product mới thành công: ", newProduct);
-                })
-                .catch((err) => {
-                  console.log("Thêm product mới thất bại!");
-                  return res.status(500).json({
-                    status: "Add new product failed!!",
-                    excelRow: i,
-                    err: err,
-                  });
-                });
-            }
-          })
-          .catch(async (error) => {
-            return res.status(500).json({
-              status: "Push new size failed!! ",
-              excelRow: i,
-              err: error,
-            });
-          });
-      }
-    }
-  }
-  deleteFile();
-  return res.status(200).send("Import dữ liệu thành công");
 });
 
 router.post("/img/updates", async (req, res) => {
@@ -401,7 +409,6 @@ router.post("/add", multerUploads, async (req, res) => {
       path.extname(req.file.originalname),
       buffer
     );
-    console.log(fileAvatar);
 
     //upload file to clould
     var image = await cloudinary.uploader.upload(fileAvatar, {
@@ -516,7 +523,11 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
   //If name exist on system=> no create QR code, else create QR code
   if (req.body.name && prd.name !== req.body.name) {
     const fileQrCode = await generateQR(
-      `${req.body.name} ${req.body.salePrice} ${req.body.discount}`
+      JSON.stringify({
+        name: req.body.name,
+        salePrice: req.body.salePrice,
+        discount: req.body.discount,
+      })
     );
     var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
       folder: "Linh",
@@ -533,6 +544,7 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
     discount: req.body.discount || prd.discount,
     desc: req.body.desc || prd.desc,
     options: req.body.options || prd.options,
+    categoryId: req.body.categoryId || prd.categoryId,
   };
   const filter = { _id: req.params.id };
   console.log(req.params.id);

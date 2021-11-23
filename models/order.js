@@ -34,6 +34,10 @@ let order_Schema = new Schema({
       ref: "OrderDetail",
     },
   ],
+  status: {
+    type: String,
+    required: true,
+  },
 });
 
 let orderDetail_Schema = new Schema({

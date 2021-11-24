@@ -28,7 +28,7 @@ let order_Schema = new Schema({
   orderTotal: {
     type: Number,
   },
-  list: [
+  orderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderDetail",

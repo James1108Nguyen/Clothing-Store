@@ -2,10 +2,16 @@ const express = require("express");
 const router = express.Router();
 const { Customer } = require("../models/customer");
 
-router.get("/list", (request, response) => {
-  Customer.find({}).exec(function (err, customers) {
-    response.send(customers);
+router.get("/list", async (req, res) => {
+  var customers = await Customer.find({}).populate({
+    path: "listOrders",
+    select: "orderTotal status",
   });
+  if (customers) {
+    res.status(200).send(customers);
+  } else {
+    res.status(500).send("Bad server");
+  }
 });
 
 //Create new customerModel

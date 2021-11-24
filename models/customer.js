@@ -26,6 +26,12 @@ let customer_Schema = new Schema({
     type: Number,
     default: 0,
   },
+  listOrders: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+    },
+  ],
 });
 
 customer_Schema.plugin(uniqueValidator);

@@ -123,7 +123,7 @@ router.post("/register", multerUploads, async (req, res) => {
   if (req.file) {
     const buffer = req.file.buffer;
     const file = getFileBuffer(path.extname(req.file.originalname), buffer);
-
+    console.log(file);
     //upload file to clould
     var image = await cloudinary.uploader.upload(file, {
       folder: "Linh",
@@ -208,17 +208,6 @@ router.put("/updateUser/:id", multerUploads, async (req, res) => {
     { new: true },
     async function (err, doc) {
       if (err) {
-        if (image) {
-          await cloudinary.uploader.destroy(
-            image.public_id,
-            function (err, result) {
-              if (err) {
-                res.status(500).send(err);
-              }
-            }
-          );
-        }
-
         res.status(400).send(err);
       } else {
         console.log("Cập nhập user thành công");
@@ -258,10 +247,42 @@ router.get("/filterUser/", function (req, res) {
       });
   }
 });
-router.post("/test", multipleMulterUploads, function (req, res) {
-  if (req) {
-    console.log(req.files[0]);
-    console.log(req.files[1]);
+router.get("/find", async function (req, res) {
+  var filter = {};
+
+  if (req.query._id) {
+    const _id = new RegExp(req.query._id + "$");
+    const users = await User.findById(_id);
+    if (users) {
+      console.log(users);
+      return res.status(200).send(users);
+    } else {
+      return res.status(404).send("User not found");
+    }
+  } else {
+    if (req.query.name) {
+      filter = { ...filter, fullname: new RegExp("^" + req.query.name, "i") };
+    }
+    var users = await User.find(filter);
+    if (users) {
+      console.log(users);
+      return res.status(200).send(users);
+    } else {
+      return res.status(404).send("User not found");
+    }
+  }
+});
+router.delete("/deleteOnebyId/:id", async function (req, res) {
+  if (req.params.id) {
+    await User.findByIdAndRemove(req.params.id)
+      .then((result) => {
+        console.log("Removed user: ", result);
+        res.status(200).send("Removed user:" + result);
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).send(err);
+      });
   }
 });
 module.exports = router;

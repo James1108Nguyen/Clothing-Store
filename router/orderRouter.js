@@ -57,5 +57,26 @@ router.post("/product/add", async (req, res) => {
       });
   });
 });
+router.post("/", async function (req, res) {
+  //let orderDetails = await req.body.orderDetails.map(async (product) => {
+  /// let newOrderDetails = OrderDetail({
+  //  product: product.productId,
+  ///  quantity: product.quantity,
+  //});
+  // });
+  const orderDetails = req.body.orderDetails;
+  const orderDetailIds = [];
+  var newOrderDetails = await OrderDetail.insertMany(orderDetails);
+  newOrderDetails.map((orderDetail) => {
+    orderDetailIds.push(orderDetail._id);
+  });
+  console.log(orderDetailIds);
+});
 
+// newOrderItem = await newOrderItem.save();
+// return newOrderItem._id;
+// });
+//const list = req.body.lists;
+//console.log(list);
+//});
 module.exports = router;

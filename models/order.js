@@ -4,12 +4,12 @@ var uniqueValidator = require("mongoose-unique-validator");
 const Schema = mongoose.Schema;
 
 let order_Schema = new Schema({
-  userId: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  customerId: {
+  customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
     required: true,
@@ -28,7 +28,7 @@ let order_Schema = new Schema({
   orderTotal: {
     type: Number,
   },
-  list: [
+  orderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderDetail",
@@ -37,16 +37,12 @@ let order_Schema = new Schema({
 });
 
 let orderDetail_Schema = new Schema({
-  productId: {
+  product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
     required: true,
   },
-  orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
-    required: true,
-  },
+
   quantity: {
     type: Number,
     required: true,

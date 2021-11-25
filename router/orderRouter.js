@@ -4,7 +4,8 @@ const { Customer } = require("../models/customer");
 const router = express.Router();
 const { Order } = require("../models/order");
 const { OrderDetail } = require("../models/order");
-
+const generateQR = require("../middlewares/gererateQR");
+const { cloudinary } = require("../config/cloudinary");
 router.get("/list", async (req, res) => {
   var orders = await Order.find().populate({ path: "orderDetails" });
 
@@ -74,23 +75,42 @@ router.post("/", async function (req, res) {
     discount: req.body.discount,
     orderTotal: req.body.orderTotal,
     orderDetails: orderDetailIds,
+    status: "Đã thanh toán",
   });
 
   order.save(async function (err, order) {
     if (err) {
-      console.log("loi Order");
+      console.log("Loi Order");
       console.log(err);
       res.status(500).send(err);
     } else {
-      console.log(order);
-      res.status(200).send(order);
+      const fileQrCode = await generateQR(
+        JSON.stringify({
+          orderId: order._id,
+          customerId: req.body.customer,
+          orderTotal: req.body.orderTotal,
+          discount: req.body.discount,
+          point: req.body.point,
+        })
+      );
+      var qrCodeImage = await cloudinary.uploader.upload(fileQrCode, {
+        folder: "Linh",
+      });
+      const qrCodeUrl = qrCodeImage.url;
+      orderWithQr = await Order.findOneAndUpdate(
+        { _id: order.id },
+        { qrCodeUrl: qrCodeUrl },
+        { returnOriginal: false }
+      );
+      console.log(orderWithQr);
+      res.status(200).send(orderWithQr);
       var updateInfo = await Customer.updateOne(
         {
           _id: req.body.customer,
         },
-        { $push: { listOrders: order._id } }
+        { $push: { listOrders: order._id }, point: req.body.point }
       );
-      console.log(updateInfo);
+
       if (updateInfo.modifiedCount) {
         console.log("Thêm order vào khách hàng thành công");
       } else {

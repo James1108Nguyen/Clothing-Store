@@ -27,12 +27,19 @@ let order_Schema = new Schema({
   orderTotal: {
     type: Number,
   },
+  qrCodeUrl: {
+    type: String,
+  },
   orderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderDetail",
     },
   ],
+  status: {
+    type: String,
+    default: "Chưa thanh toán",
+  },
 });
 
 let orderDetail_Schema = new Schema({

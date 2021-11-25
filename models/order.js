@@ -4,15 +4,14 @@ var uniqueValidator = require("mongoose-unique-validator");
 const Schema = mongoose.Schema;
 
 let order_Schema = new Schema({
-  userId: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  customerId: {
+  customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
-    required: true,
   },
   dateOrder: {
     type: Date,
@@ -28,7 +27,10 @@ let order_Schema = new Schema({
   orderTotal: {
     type: Number,
   },
-  list: [
+  qrCodeUrl: {
+    type: String,
+  },
+  orderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderDetail",
@@ -36,21 +38,17 @@ let order_Schema = new Schema({
   ],
   status: {
     type: String,
-    required: true,
+    default: "Chưa thanh toán",
   },
 });
 
 let orderDetail_Schema = new Schema({
-  productId: {
+  product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
     required: true,
   },
-  orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
-    required: true,
-  },
+
   quantity: {
     type: Number,
     required: true,

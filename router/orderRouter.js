@@ -1,14 +1,13 @@
 const express = require("express");
+const { async } = require("q");
+const { Customer } = require("../models/customer");
 const router = express.Router();
 const { Order } = require("../models/order");
 const { OrderDetail } = require("../models/order");
-const { Customer } = require("../models/customer");
-const e = require("express");
+
 router.get("/list", async (req, res) => {
-  var orders = await Order.find()
-    .populate({ path: "list" })
-    .populate({ path: "userId", select: "fullname" })
-    .populate({ path: "customerId", select: "name" });
+  var orders = await Order.find().populate({ path: "orderDetails" });
+
   if (orders) {
     res.status(200).send(orders);
   } else {
@@ -24,36 +23,16 @@ router.post("/create", async (req, res) => {
     subTotal: req.body.subTotal,
     discount: req.body.discount,
     orderTotal: req.body.orderTotal,
-    status: req.body.status,
   });
-  await order
+  order
     .save()
-    .then(async (newOrder) => {
-      const cus = await Customer.findByIdAndUpdate(
-        { _id: newOrder.customerId },
-        { $push: { listOrders: newOrder } },
-        { new: true }
-      )
-        .then((newCustom) => {
-          if (!newCustom)
-            return res.status(400).send("Thêm Order vào customer thất bại!");
-          res.status(200).json({
-            status: "Thêm Order vào customer thành công!",
-            newCustom: newCustom,
-            newOrder: newOrder,
-          });
-        })
-        .catch((err) => {
-          res.status(400).send({
-            err: err,
-            status: "Thêm Order vào customer thất bại!",
-          });
-        });
+    .then((newCustomer) => {
+      res.status(200).send(newCustomer);
     })
     .catch((err) => {
       res.status(400).send({
         error: err,
-        status: "Lưu Order Thất bại",
+        status: "Failure",
       });
     });
 });
@@ -64,7 +43,7 @@ router.post("/product/add", async (req, res) => {
     orderId: req.body.orderId,
     quantity: req.body.quantity,
   });
-  await orderDetail.save().then(async (newDetails) => {
+  orderDetail.save().then(async (newDetails) => {
     const od = await Order.findById({ _id: newDetails.orderId });
     od.list.push(newDetails);
     await od
@@ -78,6 +57,46 @@ router.post("/product/add", async (req, res) => {
           status: "Failure",
         });
       });
+  });
+});
+router.post("/", async function (req, res) {
+  const orderDetails = req.body.orderDetails;
+  const orderDetailIds = [];
+  var newOrderDetails = await OrderDetail.insertMany(orderDetails);
+  newOrderDetails.map((orderDetail) => {
+    orderDetailIds.push(orderDetail._id);
+  });
+
+  const order = new Order({
+    user: req.body.user,
+    customer: req.body.customer,
+    subTotal: req.body.subTotal,
+    discount: req.body.discount,
+    orderTotal: req.body.orderTotal,
+    orderDetails: orderDetailIds,
+  });
+
+  order.save(async function (err, order) {
+    if (err) {
+      console.log("loi Order");
+      console.log(err);
+      res.status(500).send(err);
+    } else {
+      console.log(order);
+      res.status(200).send(order);
+      var updateInfo = await Customer.updateOne(
+        {
+          _id: req.body.customer,
+        },
+        { $push: { listOrders: order._id } }
+      );
+      console.log(updateInfo);
+      if (updateInfo.modifiedCount) {
+        console.log("Thêm order vào khách hàng thành công");
+      } else {
+        console.log("Thêm đơn hàng vào khách hàng thất bại");
+      }
+    }
   });
 });
 

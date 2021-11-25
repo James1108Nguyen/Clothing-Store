@@ -49,6 +49,7 @@ router.post("/login", async function (req, res) {
     "auth-token": token,
     position: user.position,
     userId: user._id,
+    fullname: user.fullname,
   });
 });
 

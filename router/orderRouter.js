@@ -7,7 +7,9 @@ const { OrderDetail } = require("../models/order");
 const generateQR = require("../middlewares/gererateQR");
 const { cloudinary } = require("../config/cloudinary");
 router.get("/list", async (req, res) => {
-  var orders = await Order.find().populate({ path: "orderDetails" });
+  var orders = await Order.find()
+    .populate({ path: "orderDetails" })
+    .populate("customer", "name phone");
 
   if (orders) {
     res.status(200).send(orders);
@@ -41,7 +43,7 @@ router.post("/create", async (req, res) => {
 router.post("/product/add", async (req, res) => {
   let orderDetail = OrderDetail({
     productId: req.body.productId,
-    orderId: req.body.orderId,
+
     quantity: req.body.quantity,
   });
   orderDetail.save().then(async (newDetails) => {

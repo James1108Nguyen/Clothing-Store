@@ -7,7 +7,9 @@ const { OrderDetail } = require("../models/order");
 const generateQR = require("../middlewares/gererateQR");
 const { cloudinary } = require("../config/cloudinary");
 router.get("/list", async (req, res) => {
-  var orders = await Order.find().populate({ path: "orderDetails" });
+  var orders = await Order.find()
+    .populate({ path: "orderDetails" })
+    .populate("customer", "name phone point");
 
   if (orders) {
     res.status(200).send(orders);
@@ -15,7 +17,24 @@ router.get("/list", async (req, res) => {
     res.status(500).send("Bad server");
   }
 });
+router.get("/:id", async function (req, res) {
+  console.log(req.params.id);
+  var order = await Order.findById(req.params.id)
+    .populate("customer", "name phone point")
+    .populate({
+      path: "orderDetails",
+      populate: {
+        path: "product",
+        select: "name saleprice imageDisplay salePrice",
+      },
+    });
 
+  if (order) {
+    res.status(200).send(order);
+  } else {
+    res.send(500).send("Lỗi server");
+  }
+});
 //Create new Order
 router.post("/create", async (req, res) => {
   let order = Order({
@@ -41,7 +60,7 @@ router.post("/create", async (req, res) => {
 router.post("/product/add", async (req, res) => {
   let orderDetail = OrderDetail({
     productId: req.body.productId,
-    orderId: req.body.orderId,
+
     quantity: req.body.quantity,
   });
   orderDetail.save().then(async (newDetails) => {

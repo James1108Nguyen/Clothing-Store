@@ -25,7 +25,7 @@ router.get("/:id", async function (req, res) {
       path: "orderDetails",
       populate: {
         path: "product",
-        select: "name saleprice imageDisplay",
+        select: "name saleprice imageDisplay salePrice",
       },
     });
 

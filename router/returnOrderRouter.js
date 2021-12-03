@@ -17,22 +17,33 @@ router.post("/", async function (req, res) {
       returnOrderDetails[i].oldQuantity -
       returnOrderDetails[i].returnedQuantity;
     if (quantity == 0) {
-      OrderDetail.findByIdAndRemove(returnOrderDetails[i].orderDetail);
-    }
-    OrderDetail.findByIdAndUpdate(
-      returnOrderDetails[i].orderDetail,
-      {
-        quantity,
-      },
-      { new: true },
-      function (err, doc) {
-        if (err) {
-          console.log("Lỗi update");
-        } else {
-          console.log(doc);
+      console.log(returnOrderDetails[i].orderDetail);
+      OrderDetail.findByIdAndRemove(
+        returnOrderDetails[i].orderDetail,
+        function (err, doc) {
+          if (doc) {
+            console.log("Xoá sản phẩm thành công");
+          } else {
+            console.log("Xoá chi tiết đơn thành công");
+          }
         }
-      }
-    );
+      );
+    } else {
+      OrderDetail.findByIdAndUpdate(
+        returnOrderDetails[i].orderDetail,
+        {
+          quantity,
+        },
+        { new: true },
+        function (err, doc) {
+          if (err) {
+            console.log("Lỗi update");
+          } else {
+            console.log(doc);
+          }
+        }
+      );
+    }
   }
   Order.findByIdAndUpdate(
     req.body.order,

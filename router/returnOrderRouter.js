@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { ReturnOrderDetail } = require("../models/returnOrderDetail");
 const { ReturnOrder } = require("../models/returnOrder");
-const { OrderDetail } = require("../models/order");
+const { OrderDetail, Order } = require("../models/order");
 const generateQR = require("../middlewares/gererateQR");
 const { cloudinary } = require("../config/cloudinary");
 const { Customer } = require("../models/customer");
@@ -13,12 +13,16 @@ router.post("/", async function (req, res) {
 
   const returnOrderDetailIds = [];
   for (var i in returnOrderDetails) {
+    const quantity =
+      returnOrderDetails[i].oldQuantity -
+      returnOrderDetails[i].returnedQuantity;
+    if (quantity == 0) {
+      OrderDetail.findByIdAndRemove(returnOrderDetails[i].orderDetail);
+    }
     OrderDetail.findByIdAndUpdate(
       returnOrderDetails[i].orderDetail,
       {
-        quantity:
-          returnOrderDetails[i].oldQuantity -
-          returnOrderDetails[i].returnedQuantity,
+        quantity,
       },
       { new: true },
       function (err, doc) {
@@ -30,6 +34,21 @@ router.post("/", async function (req, res) {
       }
     );
   }
+  Order.findByIdAndUpdate(
+    req.body.order,
+    {
+      totalReturnPrice: req.body.totalReturnPrice,
+      status: "Đã trả hàng",
+    },
+    { new: true },
+    function (err, doc) {
+      if (err) {
+        console.log("Lỗi update");
+      } else {
+        console.log(doc);
+      }
+    }
+  );
   var newReturnOrderDetails = await ReturnOrderDetail.insertMany(
     returnOrderDetails
   );
@@ -72,7 +91,7 @@ router.post("/", async function (req, res) {
       );
 
       res.status(200).send(orderWithQr);
-      console.log(orderWithQr);
+
       var updateInfo = await Customer.updateOne(
         {
           _id: req.body.customer,

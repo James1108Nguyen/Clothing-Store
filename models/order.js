@@ -40,6 +40,9 @@ let order_Schema = new Schema({
     type: String,
     default: "Chưa thanh toán",
   },
+  totalReturnPrice: {
+    type: Number,
+  },
 });
 
 let orderDetail_Schema = new Schema({

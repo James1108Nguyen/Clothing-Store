@@ -30,16 +30,21 @@ router.get("/", async function (req, res) {
   }
 });
 router.get("/:id", async function (req, res) {
-  var returnOrder = await await ReturnOrder.findById(req.params.id).populate({
-    path: "returnOrderDetails",
-    populate: {
-      path: "orderDetail",
+  var returnOrder = await await ReturnOrder.findById(req.params.id)
+    .populate({
+      path: "customer",
+      select: "name phone",
+    })
+    .populate({
+      path: "returnOrderDetails",
       populate: {
-        path: "product",
-        select: "name salePrice",
+        path: "orderDetail",
+        populate: {
+          path: "product",
+          select: "name salePrice",
+        },
       },
-    },
-  });
+    });
   if (returnOrder) {
     res.status(200).send(returnOrder);
   } else {
@@ -87,6 +92,7 @@ router.post("/", async function (req, res) {
     req.body.order,
     {
       totalReturnPrice: req.body.totalReturnPrice,
+
       status: "Đã trả hàng",
     },
     { new: true },

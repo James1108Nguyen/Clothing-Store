@@ -29,6 +29,19 @@ router.get("/", async function (req, res) {
     res.status(500).send("Bad server");
   }
 });
+router.get("/:id", async function (req, res) {
+  var returnOrder = await await ReturnOrder.findById(req.params.id).populate({
+    path: "returnOrderDetails",
+    populate: {
+      path: "orderDetail",
+    },
+  });
+  if (returnOrder) {
+    res.status(200).send(returnOrder);
+  } else {
+    res.send(500).send("Lỗi server");
+  }
+});
 router.post("/", async function (req, res) {
   const returnOrderDetails = req.body.returnOrderDetails;
 
@@ -37,35 +50,35 @@ router.post("/", async function (req, res) {
     const quantity =
       returnOrderDetails[i].oldQuantity -
       returnOrderDetails[i].returnedQuantity;
-    if (quantity == 0) {
-      console.log(returnOrderDetails[i].orderDetail);
-      OrderDetail.findByIdAndRemove(
-        returnOrderDetails[i].orderDetail,
-        function (err, doc) {
-          if (doc) {
-            console.log("Xoá sản phẩm thành công");
-          } else {
-            console.log("Xoá chi tiết đơn thành công");
-          }
+    //if (quantity == 0) {
+    console.log(returnOrderDetails[i].orderDetail);
+    //OrderDetail.findByIdAndRemove(
+    // returnOrderDetails[i].orderDetail,
+    // function (err, doc) {
+    //  if (doc) {
+    //   console.log("Xoá sản phẩm thành công");
+    // } else {
+    //    console.log("Xoá chi tiết đơn thành công");
+    // }
+    //  }
+    //);
+    //} else {
+    OrderDetail.findByIdAndUpdate(
+      returnOrderDetails[i].orderDetail,
+      {
+        quantity,
+      },
+      { new: true },
+      function (err, doc) {
+        if (err) {
+          console.log("Lỗi update");
+        } else {
+          console.log(doc);
         }
-      );
-    } else {
-      OrderDetail.findByIdAndUpdate(
-        returnOrderDetails[i].orderDetail,
-        {
-          quantity,
-        },
-        { new: true },
-        function (err, doc) {
-          if (err) {
-            console.log("Lỗi update");
-          } else {
-            console.log(doc);
-          }
-        }
-      );
-    }
+      }
+    );
   }
+
   Order.findByIdAndUpdate(
     req.body.order,
     {

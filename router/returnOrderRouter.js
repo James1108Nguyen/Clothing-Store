@@ -8,6 +8,27 @@ const { cloudinary } = require("../config/cloudinary");
 const { Customer } = require("../models/customer");
 module.exports = router;
 
+router.get("/", async function (req, res) {
+  var returnOrders = await ReturnOrder.find().populate({
+    path: "order",
+    populate: [
+      {
+        path: "user",
+        select: "fullname",
+      },
+      {
+        path: "customer",
+        select: "name phone",
+      },
+    ],
+  });
+
+  if (returnOrders) {
+    res.status(200).send(returnOrders);
+  } else {
+    res.status(500).send("Bad server");
+  }
+});
 router.post("/", async function (req, res) {
   const returnOrderDetails = req.body.returnOrderDetails;
 

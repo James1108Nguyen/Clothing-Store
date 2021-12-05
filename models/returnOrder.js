@@ -6,14 +6,14 @@ let returnOrder_Schema = new Schema({
     ref: "Order",
     required: true,
   },
-  user: {
+  cashier: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
   returnOrderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "returnOrderDetail",
+      ref: "ReturnOrderDetail",
       require: true,
     },
   ],
@@ -28,6 +28,10 @@ let returnOrder_Schema = new Schema({
   },
   qrCodeUrl: {
     type: String,
+  },
+  dateReturn: {
+    type: Date,
+    default: Date.now(),
   },
 });
 exports.ReturnOrder = mongoose.model("ReturnOrder", returnOrder_Schema);

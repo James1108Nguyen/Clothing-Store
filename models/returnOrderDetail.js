@@ -10,6 +10,10 @@ let returnOrderDetail_Schema = new Schema({
     type: Number,
     required: true,
   },
+  oldQuantity: {
+    type: Number,
+    required: true,
+  },
 });
 exports.ReturnOrderDetail = mongoose.model(
   "ReturnOrderDetail",

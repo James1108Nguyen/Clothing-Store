@@ -34,6 +34,10 @@ router.get("/:id", async function (req, res) {
     path: "returnOrderDetails",
     populate: {
       path: "orderDetail",
+      populate: {
+        path: "product",
+        select: "name salePrice",
+      },
     },
   });
   if (returnOrder) {

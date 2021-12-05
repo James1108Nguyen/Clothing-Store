@@ -32,8 +32,17 @@ router.get("/", async function (req, res) {
 router.get("/:id", async function (req, res) {
   var returnOrder = await await ReturnOrder.findById(req.params.id)
     .populate({
-      path: "customer",
-      select: "name phone",
+      path: "order",
+      populate: [
+        {
+          path: "user",
+          select: "fullname",
+        },
+        {
+          path: "customer",
+          select: "name phone",
+        },
+      ],
     })
     .populate({
       path: "returnOrderDetails",

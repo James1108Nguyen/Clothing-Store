@@ -42,6 +42,7 @@ let order_Schema = new Schema({
   },
   totalReturnPrice: {
     type: Number,
+    default: 0,
   },
 });
 

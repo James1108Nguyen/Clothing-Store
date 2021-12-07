@@ -32,7 +32,7 @@ router.get("/:id", async function (req, res) {
   if (order) {
     res.status(200).send(order);
   } else {
-    res.send(500).send("Lỗi server");
+    res.status(500).send("Lỗi server");
   }
 });
 //Create new Order
@@ -135,6 +135,27 @@ router.post("/", async function (req, res) {
       } else {
         console.log("Thêm đơn hàng vào khách hàng thất bại");
       }
+    }
+  });
+});
+
+//get total revenue today
+router.get("/revenue/revenueToday", async function (req, res) {
+  const agg = Order.aggregate([
+    {
+      $match: { orderTotal: { $lte: 400000 } },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: { $subtract: ["$orderTotal", "$totalReturnPrice"] } },
+      },
+    },
+  ]).exec((err, doc) => {
+    if (doc) {
+      res.send(doc);
+    } else {
+      res.send(err);
     }
   });
 });

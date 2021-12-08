@@ -557,12 +557,4 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
   });
 });
 
-router.post("/test", async (req, res) => {
-  let prd = await Product.findOne({
-    name: "Áo Nỉ Nam Thời Trang Trẻ Trung Chất Vải Co Dãn ZEROOOOOOOOOOOOO11",
-    "options.size": "XXL",
-  });
-  console.log(prd);
-});
-
 module.exports = router;

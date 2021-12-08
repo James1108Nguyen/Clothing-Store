@@ -159,5 +159,68 @@ router.get("/revenue/revenueToday", async function (req, res) {
     }
   });
 });
+//get top 5 product
+router.get("/revenue/getTop5", async function (req, res) {
+  const totalResult = await Order.aggregate([
+    {
+      $lookup: {
+        from: "orderdetails", // update your actual product collection name
+        localField: "orderDetails",
+        foreignField: "_id",
+        as: "orderDetails",
+      },
+    },
+    { $unwind: "$orderDetails" },
+    {
+      $lookup: {
+        from: "products",
+        localField: "orderDetails.product",
+        foreignField: "_id",
+        as: "orderDetails.product",
+      },
+    },
+    { $unwind: "$orderDetails.product" },
 
+    {
+      $group: {
+        _id: "$orderDetails.product._id",
+        count: { $sum: "$orderDetails.quantity" },
+        totalSalePrice: {
+          $sum: {
+            $multiply: [
+              "$orderDetails.quantity",
+              "$orderDetails.product.salePrice",
+            ],
+          },
+        },
+      },
+    },
+    { $sort: { totalSalePrice: -1, count: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: "products",
+        localField: "_id",
+        foreignField: "_id",
+        as: "product",
+      },
+    },
+    { $unwind: "$product" },
+    {
+      $project: {
+        _id: 1,
+        totalSalePrice: 1,
+        count: 1,
+        productName: "$product.name",
+        salePrice: "$product.salePrice",
+      },
+    },
+  ]).exec((err, doc) => {
+    if (doc) {
+      res.send(doc);
+    } else {
+      res.send(err);
+    }
+  });
+});
 module.exports = router;

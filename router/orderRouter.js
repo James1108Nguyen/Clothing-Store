@@ -11,7 +11,8 @@ router.get("/list", async (req, res) => {
   var orders = await Order.find()
     .populate({ path: "orderDetails" })
     .populate("customer", "name phone point")
-    .populate("user", "fullname");
+    .populate("user", "fullname")
+    .sort({ dateOrder: -1 });
   if (orders) {
     res.status(200).send(orders);
   } else {
@@ -402,31 +403,12 @@ router.get("/revenue/getExpensiveToday", function (req, res) {
 });
 function getMonday(d) {
   d = new Date(d);
+  d.setUTCHours(0, 0, 0, 0);
   var day = d.getDay(),
     diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
   return new Date(d.setDate(diff));
 }
 
-router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
-  const startOfWeek = getMonday(new Date());
-
-  startOfWeek.setUTCHours(0, 0, 0, 0);
-  Order.aggregate([
-    {
-      $match: {
-        dateOrder: {
-          $gte: startOfWeek,
-        },
-      },
-    },
-  ]).exec(function (err, doc) {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(doc);
-    }
-  });
-});
 router.get("/revenue/getCountOrderToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
@@ -454,6 +436,110 @@ router.get("/revenue/getCountOrderToday", function (req, res) {
       res.status(500).send(err);
     } else {
       res.status(200).send(doc);
+    }
+  });
+});
+function randomDate(start, end) {
+  return new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime())
+  );
+}
+//create script random date in a week
+router.get("/revenue/updateOrder", async function (req, res) {
+  //Order.updateMany()
+  var orders = await Order.find();
+  orders.forEach((order) => {
+    console.log(order);
+    Order.findByIdAndUpdate(
+      order._id,
+      {
+        dateOrder: randomDate(new Date(2021, 11, 3), new Date()),
+      },
+      { new: true },
+      function (err, doc) {
+        if (err) {
+          // res.send(err);
+        } else {
+          //res.send(doc);
+        }
+      }
+    );
+  });
+  if (orders) {
+    res.send(orders);
+  }
+  // Order.updateMany(
+  //   {
+  //     dateOrder: randomDate(new Date(2021, 11, 5), new Date(2021, 11, 13)),
+  //   },
+
+  //   function (err, order) {
+  //     if (err) {
+  //       //res.send(err);
+  //     } else {
+  //       //res.send(order);
+  //     }
+  //   }
+  // );
+  console.log(randomDate(new Date(2012, 0, 1), new Date()));
+  //res.send(randomDate(new Date(2021, 11, 5), new Date(2021, 11, 13)));
+});
+router.get("/revenue/getTotalCustomerByThisWeek", function (req, res) {
+  const startOfWeek = getMonday(new Date());
+
+  startOfWeek.setUTCHours(0, 0, 0, 0);
+  Order.aggregate([
+    {
+      $match: {
+        dateOrder: {
+          $gte: startOfWeek,
+        },
+      },
+    },
+
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
+        totalCustomer: { $sum: 1 },
+      },
+    },
+  ]).exec(function (err, doc) {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(doc);
+    }
+  });
+});
+router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
+  const startDate = new Date();
+  const endDate = new Date();
+  startDate.setDate(startDate.getDate() - 7);
+  const startOfWeek = getMonday(startDate);
+  const endOfWeek = getMonday(endDate);
+  console.log(endOfWeek);
+  startOfWeek.setUTCHours(0, 0, 0, 0);
+  Order.aggregate([
+    {
+      $match: {
+        dateOrder: {
+          $gte: startOfWeek,
+          $lt: endOfWeek,
+        },
+      },
+    },
+
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
+        totalCustomer: { $sum: 1 },
+      },
+    },
+  ]).exec(function (err, doc) {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(doc);
     }
   });
 });

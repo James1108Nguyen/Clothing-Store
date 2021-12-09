@@ -401,9 +401,9 @@ router.get("/revenue/getExpensiveToday", function (req, res) {
   });
 });
 
-router.get("/getTotalCustomerByLastWeek", function (req, res) {
-  res.send("OK, Khó");
-});
+//router.get("/getTotalCustomerByLastWeek", function (req, res) {
+//  res.send("OK, Khó");
+//});
 router.get("/revenue/getCountOrderToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();

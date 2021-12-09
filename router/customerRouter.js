@@ -34,5 +34,15 @@ router.post("/create", async (req, res) => {
       res.status(400).send(err);
     });
 });
-
+//select top 1 customer by point
+router.get("/getTopCustomerByPoint/:limit", async function (req, res) {
+  var customer = await Customer.find()
+    .sort({ point: -1 })
+    .limit(parseInt(req.params.limit));
+  if (customer) {
+    res.status(200).send(customer);
+  } else {
+    res.status(500).send("Lỗi server");
+  }
+});
 module.exports = router;

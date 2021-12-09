@@ -145,7 +145,8 @@ router.post("/", async function (req, res) {
 router.get("/revenue/revenueToday", async function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
-
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
   endOfDate.setUTCHours(23, 59, 59, 999);
   const agg = Order.aggregate([
@@ -176,7 +177,8 @@ router.get("/revenue/revenueToday", async function (req, res) {
 router.get("/revenue/getTop5ProductByRevenue", async function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
-
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
   endOfDate.setUTCHours(23, 59, 59, 999);
 
@@ -257,6 +259,8 @@ router.get("/revenue/getTop5ProductByRevenue", async function (req, res) {
 router.get("/revenue/getTopProductByQuantity/:number", async (req, res) => {
   var startOfDate = new Date();
   var endOfDate = new Date();
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   const number = req.params.number;
   startOfDate.setUTCHours(0, 0, 0, 0);
   endOfDate.setUTCHours(23, 59, 59, 999);
@@ -338,9 +342,11 @@ router.get("/revenue/getTopProductByQuantity/:number", async (req, res) => {
 router.get("/revenue/getExpensiveToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
-
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
   endOfDate.setUTCHours(23, 59, 59, 999);
+  console.log(startOfDate);
   Order.aggregate([
     {
       $match: {
@@ -403,6 +409,7 @@ router.get("/revenue/getExpensiveToday", function (req, res) {
 });
 function getMonday(d) {
   d = new Date(d);
+  d.setHours(d.getHours() + 7);
   d.setUTCHours(0, 0, 0, 0);
   var day = d.getDay(),
     diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
@@ -412,7 +419,8 @@ function getMonday(d) {
 router.get("/revenue/getCountOrderToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
-
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
   endOfDate.setUTCHours(23, 59, 59, 999);
   Order.aggregate([
@@ -503,6 +511,11 @@ router.get("/revenue/getTotalCustomerByThisWeek", function (req, res) {
         totalCustomer: { $sum: 1 },
       },
     },
+    {
+      $sort: {
+        _id: 1,
+      },
+    },
   ]).exec(function (err, doc) {
     if (err) {
       res.send(err);
@@ -514,6 +527,7 @@ router.get("/revenue/getTotalCustomerByThisWeek", function (req, res) {
 router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
   const startDate = new Date();
   const endDate = new Date();
+
   startDate.setDate(startDate.getDate() - 7);
   const startOfWeek = getMonday(startDate);
   const endOfWeek = getMonday(endDate);
@@ -533,6 +547,11 @@ router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
         totalCustomer: { $sum: 1 },
+      },
+    },
+    {
+      $sort: {
+        _id: 1,
       },
     },
   ]).exec(function (err, doc) {

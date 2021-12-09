@@ -400,10 +400,33 @@ router.get("/revenue/getExpensiveToday", function (req, res) {
     }
   });
 });
+function getMonday(d) {
+  d = new Date(d);
+  var day = d.getDay(),
+    diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
+  return new Date(d.setDate(diff));
+}
 
-//router.get("/getTotalCustomerByLastWeek", function (req, res) {
-//  res.send("OK, Khó");
-//});
+router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
+  const startOfWeek = getMonday(new Date());
+
+  startOfWeek.setUTCHours(0, 0, 0, 0);
+  Order.aggregate([
+    {
+      $match: {
+        dateOrder: {
+          $gte: startOfWeek,
+        },
+      },
+    },
+  ]).exec(function (err, doc) {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(doc);
+    }
+  });
+});
 router.get("/revenue/getCountOrderToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();

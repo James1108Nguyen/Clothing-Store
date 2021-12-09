@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 var uniqueValidator = require("mongoose-unique-validator");
 
 const Schema = mongoose.Schema;
-
+const today = new Date();
+today.setHours(today.getHours + 7);
 let order_Schema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,7 +16,7 @@ let order_Schema = new Schema({
   },
   dateOrder: {
     type: Date,
-    default: Date.now(),
+    default: today,
   },
   subTotal: {
     type: Number,

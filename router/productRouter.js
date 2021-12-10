@@ -59,10 +59,6 @@ router.get("/sell", async (req, res) => {
 
   console.log(odd.length);
   odd.forEach((item) => {
-    if (
-      item.product.name != "Áo Nỉ Nam Thời Trang Trẻ Trung Chất Vải Co Dãn ZERO"
-    )
-      return;
     if (item.quantity != 0) {
       console.log(item.product.name);
       console.log(item.quantity);

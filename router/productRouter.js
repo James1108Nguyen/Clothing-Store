@@ -31,6 +31,7 @@ router.get("/sell", async (req, res) => {
   ];
   for (var i = 0; i < prd.length; i++) {
     selproduct[i] = {
+      _id: prd[i]._id,
       productName: prd[i].name,
       sellQuantity: 0,
       revenue: 0,

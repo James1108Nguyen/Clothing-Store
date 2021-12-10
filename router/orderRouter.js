@@ -173,8 +173,8 @@ router.get("/revenue/revenueToday", async function (req, res) {
     }
   });
 });
-//get top 5 product
-router.get("/revenue/getTop5ProductByRevenue", async function (req, res) {
+//get top  product
+router.get("/revenue/getTopProductByRevenue/:limit", async function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
   startOfDate.setHours(startOfDate.getHours() + 7);
@@ -226,7 +226,7 @@ router.get("/revenue/getTop5ProductByRevenue", async function (req, res) {
       },
     },
     { $sort: { totalSalePrice: -1, count: -1 } },
-    { $limit: 5 },
+    { $limit: parseInt(req.params.limit) },
     {
       $lookup: {
         from: "products",

@@ -91,15 +91,29 @@ router.get("/sell", async (req, res) => {
     res.status(500).send("Bad server");
   }
 });
-router.get("/sellbyDate", async (req, res) => {
-  var fromDate = DateTime.local()
-    .setZone("Asia/Ho_Chi_Minh")
-    .startOf("day")
-    .toString();
-  var toDate = DateTime.local()
-    .setZone("Asia/Ho_Chi_Minh")
-    .endOf("day")
-    .toString();
+router.get("/test", async function (req, res) {
+  // var formDate = new Date();
+  // var toDate = new Date();
+  // formDate.setHours(0, 0, 0, 0);
+  // toDate.setHours(23, 59, 59, 59);
+  // console.log(formDate);
+  // console.log(toDate);
+});
+router.post("/sellbyDate", async (req, res) => {
+  var fromDate = new Date(req.body.fromDate);
+  var toDate = new Date(req.body.toDate);
+  fromDate.setHours(0, 0, 0, 0);
+  toDate.setHours(23, 59, 59, 59);
+  console.log(fromDate, toDate);
+
+  // var fromDate = DateTime.local()
+  //   .setZone("Asia/Ho_Chi_Minh")
+  //   .startOf("day")
+  //   .toString();
+  // var toDate = DateTime.local()
+  //   .setZone("Asia/Ho_Chi_Minh")
+  //   .endOf("day")
+  //   .toString();
   //Bỏ bên front end
   // formDate.setHours(0, 0, 0, 0);
   // toDate.setHours(23, 59, 59, 59);
@@ -120,17 +134,17 @@ router.get("/sellbyDate", async (req, res) => {
   var selproduct = [];
   console.log("Cbi chạy");
   odf.forEach((item) => {
-    console.log("Vòng ngoài");
     if (item.orderDetails.length == 0) return;
     item.orderDetails.forEach((detail) => {
-      console.log("Vòng trong");
       if (detail.quantity == 0) return;
       let prd = {
         _id: detail.product._id,
         productName: detail.product.name,
         sellQuantity: detail.quantity,
-        revenue: detail.product.salePrice,
-        profit: detail.product.salePrice - detail.product.originPrice,
+        revenue: detail.product.salePrice * detail.quantity,
+        profit:
+          (detail.product.salePrice - detail.product.originPrice) *
+          detail.quantity,
       };
       selproduct.push(prd);
     });
@@ -174,9 +188,7 @@ router.get("/sellbyDate", async (req, res) => {
     };
   }
   if (od) {
-    return res
-      .status(200)
-      .send(selproduct.sort(compareValues("sellQuantity", "desc")));
+    return res.status(200).send(odf);
   } else {
     return res.status(500).send("Bad server");
   }

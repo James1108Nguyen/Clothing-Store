@@ -466,7 +466,7 @@ router.get("/revenue/updateOrder", async function (req, res) {
     Order.findByIdAndUpdate(
       order._id,
       {
-        dateOrder: randomDate(new Date(2021, 11, 3), new Date()),
+        dateOrder: randomDate(new Date(2021, 10, 28), new Date()),
       },
       { new: true },
       function (err, doc) {
@@ -501,7 +501,10 @@ router.get("/revenue/getTotalCustomerByThisWeek", function (req, res) {
   const startOfWeek = getMonday(new Date());
 
   startOfWeek.setUTCHours(0, 0, 0, 0);
+
+  //endOfWeek.setUTCHours(0, 0, 0, 0);
   startOfWeek.setHours(startOfWeek.getHours() - 7);
+  console.log(startOfWeek);
   Order.aggregate([
     {
       $match: {
@@ -515,6 +518,7 @@ router.get("/revenue/getTotalCustomerByThisWeek", function (req, res) {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
         totalCustomer: { $sum: 1 },
+        dateOrder: { $first: "$dateOrder" },
       },
     },
     {
@@ -535,12 +539,15 @@ router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
   const endDate = new Date();
 
   startDate.setDate(startDate.getDate() - 7);
+  console.log(startDate);
   const startOfWeek = getMonday(startDate);
   const endOfWeek = getMonday(endDate);
   console.log(endOfWeek);
   startOfWeek.setUTCHours(0, 0, 0, 0);
+  endOfWeek.setUTCHours(0, 0, 0, 0);
   startOfWeek.setHours(startOfWeek.getHours() - 7);
-  endOfWeek.setHours(endOfWeek.setHours() - 7);
+  endOfWeek.setHours(endOfWeek.getHours() - 7);
+  console.log({ startOfWeek, endOfWeek });
   Order.aggregate([
     {
       $match: {
@@ -555,6 +562,7 @@ router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
         totalCustomer: { $sum: 1 },
+        dateOrder: { $first: "$dateOrder" },
       },
     },
     {

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { OrderDetail } = require("../models/order");
+const { Order } = require("../models/order");
 const { Category } = require("../models/product");
 const { Product } = require("../models/product");
 const { ReturnOrderDetail } = require("../models/returnOrderDetail");
@@ -88,6 +89,84 @@ router.get("/sell", async (req, res) => {
   } else {
     res.status(500).send("Bad server");
   }
+});
+router.get("/sellbyDate", async (req, res) => {
+  var formDate = new Date();
+  var toDate = new Date();
+  formDate.setHours(0, 0, 0, 0);
+  toDate.setHours(23, 59, 59, 59);
+  console.log("From " + formDate + "   To " + toDate);
+  var od = await Order.find().populate({
+    path: "orderDetails",
+    populate: {
+      path: "product",
+      select: "name saleprice imageDisplay salePrice",
+    },
+  });
+  //Filter date
+
+  if (od) {
+    return res.status(200).send("From " + formDate + "       To " + toDate);
+  } else {
+    return res.status(500).send("Bad server");
+  }
+  /////////////
+  var prd = await Product.find();
+  const selproduct = [
+    {
+      productName: "",
+      sellQuantity: 0,
+    },
+  ];
+  for (var i = 0; i < prd.length; i++) {
+    selproduct[i] = {
+      _id: prd[i]._id,
+      productName: prd[i].name,
+      sellQuantity: 0,
+      revenue: 0,
+      profit: 0,
+    };
+  }
+  function compareValues(key, order = "asc") {
+    return function innerSort(a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        return 0;
+      }
+
+      const varA = typeof a[key] === "string" ? a[key].toUpperCase() : a[key];
+      const varB = typeof b[key] === "string" ? b[key].toUpperCase() : b[key];
+
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return order === "desc" ? comparison * -1 : comparison;
+    };
+  }
+  console.log(odd.length);
+  odd.forEach((item) => {
+    if (item.quantity != 0) {
+      console.log(item.product.name);
+      console.log(item.quantity);
+      for (var i = 0; i < selproduct.length; i++) {
+        if (item.product.name == selproduct[i].productName) {
+          {
+            console.log(item.product.name);
+            console.log(selproduct[i].revenue);
+            console.log("++++", item.product.salePrice);
+            selproduct[i].profit +=
+              item.quantity *
+              (item.product.salePrice - item.product.originPrice);
+            selproduct[i].revenue += item.quantity * item.product.salePrice;
+            selproduct[i].sellQuantity += item.quantity;
+            console.log(selproduct[i].revenue);
+          }
+        }
+      }
+    }
+  });
 });
 router.get("/return", async function (req, res) {
   var ReturnOrderDetails = await ReturnOrderDetail.find().populate({

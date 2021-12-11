@@ -14,8 +14,8 @@ let order_Schema = new Schema({
     ref: "Customer",
   },
   dateOrder: {
-    type: String,
-    default: time,
+    type: Date,
+    default: new Date(),
   },
   subTotal: {
     type: Number,

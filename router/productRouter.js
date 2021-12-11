@@ -132,7 +132,6 @@ router.post("/sellbyDate", async (req, res) => {
     );
   });
   var selproduct = [];
-  console.log("Cbi chạy");
   odf.forEach((item) => {
     if (item.orderDetails.length == 0) return;
     item.orderDetails.forEach((detail) => {
@@ -188,7 +187,9 @@ router.post("/sellbyDate", async (req, res) => {
     };
   }
   if (od) {
-    return res.status(200).send(odf);
+    return res
+      .status(200)
+      .send(selproduct.sort(compareValues("sellQuantity", "desc")));
   } else {
     return res.status(500).send("Bad server");
   }

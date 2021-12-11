@@ -6,7 +6,7 @@ const { Order } = require("../models/order");
 const { OrderDetail } = require("../models/order");
 const generateQR = require("../middlewares/gererateQR");
 const { cloudinary } = require("../config/cloudinary");
-
+const moment = require("moment");
 router.get("/list", async (req, res) => {
   var orders = await Order.find()
     .populate({ path: "orderDetails" })
@@ -145,10 +145,13 @@ router.post("/", async function (req, res) {
 router.get("/revenue/revenueToday", async function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
-  startOfDate.setHours(startOfDate.getHours() + 7);
-  endOfDate.setHours(endOfDate.getHours() + 7);
+
   startOfDate.setUTCHours(0, 0, 0, 0);
   endOfDate.setUTCHours(23, 59, 59, 999);
+  startOfDate.setHours(startOfDate.getHours() - 7);
+
+  endOfDate.setHours(endOfDate.getHours() - 7);
+
   const agg = Order.aggregate([
     {
       $match: {

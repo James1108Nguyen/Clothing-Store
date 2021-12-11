@@ -181,16 +181,22 @@ router.get("/revenue/getTopProductByRevenue/:limit", async function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
 
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
-  endOfDate.setUTCHours(23, 59, 59, 999);
+  endOfDate.setUTCHours(0, 0, 0, 0);
   startOfDate.setHours(startOfDate.getHours() - 7);
   endOfDate.setHours(endOfDate.getHours() - 7);
+  endOfDate.setDate(startOfDate.getDate() + 1);
+
+  console.log({ startOfDate, endOfDate });
+
   const totalResult = await Order.aggregate([
     {
       $match: {
         dateOrder: {
           $gte: startOfDate,
-          $lte: endOfDate,
+          $lt: endOfDate,
         },
       },
     },
@@ -264,10 +270,13 @@ router.get("/revenue/getTopProductByQuantity/:number", async (req, res) => {
   var endOfDate = new Date();
 
   const number = req.params.number;
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
-  endOfDate.setUTCHours(23, 59, 59, 999);
+  endOfDate.setUTCHours(0, 0, 0, 0);
   startOfDate.setHours(startOfDate.getHours() - 7);
   endOfDate.setHours(endOfDate.getHours() - 7);
+  endOfDate.setDate(startOfDate.getDate() + 1);
   console.log(req.params.number);
   const totalResult = await Order.aggregate([
     {
@@ -347,10 +356,13 @@ router.get("/revenue/getExpensiveToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
 
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
-  endOfDate.setUTCHours(23, 59, 59, 999);
+  endOfDate.setUTCHours(0, 0, 0, 0);
   startOfDate.setHours(startOfDate.getHours() - 7);
   endOfDate.setHours(endOfDate.getHours() - 7);
+  endOfDate.setDate(startOfDate.getDate() + 1);
   console.log(startOfDate);
   Order.aggregate([
     {
@@ -424,10 +436,13 @@ router.get("/revenue/getCountOrderToday", function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
 
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
-  endOfDate.setUTCHours(23, 59, 59, 999);
+  endOfDate.setUTCHours(0, 0, 0, 0);
   startOfDate.setHours(startOfDate.getHours() - 7);
   endOfDate.setHours(endOfDate.getHours() - 7);
+  endOfDate.setDate(startOfDate.getDate() + 1);
   Order.aggregate([
     {
       $match: {

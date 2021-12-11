@@ -79,11 +79,11 @@ router.post("/changePass", async function (req, res) {
 });
 //Get Info
 //Info
-router.get("/getInfo/", async function (req, res) {
-  if (!req.query.id) {
+router.get("/getInfo/:id", async function (req, res) {
+  if (!req.params.id) {
     return res.status(400).send("Error");
   }
-  let info = await User.findById(req.query.id).select("-password");
+  let info = await User.findById(req.params.id).select("-password");
   if (!info) {
     return res.status(422).send("Info not found");
   } else return res.status(200).send(info);

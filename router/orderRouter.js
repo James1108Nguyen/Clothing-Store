@@ -5,6 +5,7 @@ const router = express.Router();
 const { Order } = require("../models/order");
 const { OrderDetail } = require("../models/order");
 const generateQR = require("../middlewares/gererateQR");
+const { DateTime } = require("luxon");
 const { cloudinary } = require("../config/cloudinary");
 router.get("/list", async (req, res) => {
   var orders = await Order.find()
@@ -57,6 +58,10 @@ router.post("/create", async (req, res) => {
     });
 });
 
+router.get("/test/TIme", async (req, res) => {
+  const time = DateTime.now().setZone("Asia/Ho_Chi_Minh");
+  res.send(time.toString());
+});
 router.post("/product/add", async (req, res) => {
   let orderDetail = OrderDetail({
     productId: req.body.productId,
@@ -86,7 +91,6 @@ router.post("/", async function (req, res) {
   newOrderDetails.map((orderDetail) => {
     orderDetailIds.push(orderDetail._id);
   });
-
   const order = new Order({
     user: req.body.user,
     customer: req.body.customer,

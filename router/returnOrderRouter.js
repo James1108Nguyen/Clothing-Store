@@ -22,13 +22,75 @@ router.get("/", async function (req, res) {
       },
     ],
   });
-
   if (returnOrders) {
     res.status(200).send(returnOrders);
   } else {
     res.status(500).send("Bad server");
   }
 });
+router.get("/ReturnOrderDetail", async function (req, res) {
+  var ReturnOrderDetails = await ReturnOrderDetail.find().populate({
+    path: "orderDetail",
+    populate: {
+      path: "product",
+      select: "name saleprice imageDisplay salePrice",
+    },
+  });
+  function compareValues(key, order = "asc") {
+    return function innerSort(a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        return 0;
+      }
+
+      const varA = typeof a[key] === "string" ? a[key].toUpperCase() : a[key];
+      const varB = typeof b[key] === "string" ? b[key].toUpperCase() : b[key];
+
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return order === "desc" ? comparison * -1 : comparison;
+    };
+  }
+  var returnProduct = [];
+  if (ReturnOrderDetails) {
+    ReturnOrderDetails.forEach((item) => {
+      returnProduct.push({
+        _id: item.orderDetail.product._id,
+        name: item.orderDetail.product.name,
+        returnQuantity: item.returnedQuantity,
+      });
+    });
+    var seen = {};
+    returnProduct = returnProduct.filter(function (entry) {
+      var previous;
+      // Have we seen this label before?
+      if (seen.hasOwnProperty(entry.name)) {
+        // Yes, grab it and add this data to it
+        previous = seen[entry.name];
+        previous.returnQuantity += entry.returnQuantity;
+
+        // Don't keep this entry, we've merged it into the previous one
+        return false;
+      }
+
+      // Remember that we've seen it
+      seen[entry.name] = entry;
+
+      // Keep this one, we'll merge any others that match into it
+      return true;
+    });
+
+    res
+      .status(200)
+      .send(returnProduct.sort(compareValues("returnQuantity", "desc")));
+  } else {
+    res.status(500).send("Bad server");
+  }
+});
+
 router.get("/:id", async function (req, res) {
   var returnOrder = await await ReturnOrder.findById(req.params.id)
     .populate({

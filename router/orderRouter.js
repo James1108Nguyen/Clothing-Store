@@ -146,18 +146,20 @@ router.get("/revenue/revenueToday", async function (req, res) {
   var startOfDate = new Date();
   var endOfDate = new Date();
 
+  startOfDate.setHours(startOfDate.getHours() + 7);
+  endOfDate.setHours(endOfDate.getHours() + 7);
   startOfDate.setUTCHours(0, 0, 0, 0);
-  endOfDate.setUTCHours(23, 59, 59, 999);
+  endOfDate.setUTCHours(0, 0, 0, 0);
   startOfDate.setHours(startOfDate.getHours() - 7);
-
   endOfDate.setHours(endOfDate.getHours() - 7);
+  endOfDate.setDate(startOfDate.getDate() + 1);
   console.log({ startOfDate, endOfDate });
   const agg = Order.aggregate([
     {
       $match: {
         dateOrder: {
           $gte: startOfDate,
-          $lte: endOfDate,
+          $lt: endOfDate,
         },
       },
     },

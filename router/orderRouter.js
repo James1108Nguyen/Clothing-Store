@@ -530,17 +530,14 @@ router.get("/revenue/getTotalCustomerByThisWeek", function (req, res) {
         },
       },
     },
-
     {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
-        totalCustomer: { $sum: 1 },
-        dateOrder: { $first: "$dateOrder" },
+      $project: {
+        dateOrder: "$dateOrder",
       },
     },
     {
       $sort: {
-        _id: 1,
+        dateOrder: 1,
       },
     },
   ]).exec(function (err, doc) {
@@ -574,17 +571,14 @@ router.get("/revenue/getTotalCustomerByLastWeek", function (req, res) {
         },
       },
     },
-
     {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateOrder" } },
-        totalCustomer: { $sum: 1 },
-        dateOrder: { $first: "$dateOrder" },
+      $project: {
+        dateOrder: "$dateOrder",
       },
     },
     {
       $sort: {
-        _id: 1,
+        dateOrder: 1,
       },
     },
   ]).exec(function (err, doc) {

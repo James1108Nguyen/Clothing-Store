@@ -85,6 +85,21 @@ router.get("/sell", async (req, res) => {
     }
   });
 
+  selproduct.push({
+    _id: "61af053cce857cd6dTOTAL00",
+    productName: "Tổng cộng",
+    sellQuantity: 0,
+    revenue: 0,
+    profit: 0,
+  });
+
+  for (var i = 0; i < selproduct.length - 1; i++) {
+    selproduct[selproduct.length - 1].sellQuantity +=
+      selproduct[i].sellQuantity;
+    selproduct[selproduct.length - 1].revenue += selproduct[i].revenue;
+    selproduct[selproduct.length - 1].profit += selproduct[i].profit;
+  }
+
   if (odd) {
     res
       .status(200)
@@ -178,6 +193,21 @@ router.post("/sellbyDate", async (req, res) => {
       return order === "desc" ? comparison * -1 : comparison;
     };
   }
+  selproduct.push({
+    _id: "61af053cce857cd6d8888888",
+    productName: "Tổng cộng",
+    sellQuantity: 0,
+    revenue: 0,
+    profit: 0,
+  });
+
+  for (var i = 0; i < selproduct.length - 1; i++) {
+    console.log(selproduct[i].sellQuantity);
+    selproduct[selproduct.length - 1].sellQuantity +=
+      selproduct[i].sellQuantity;
+    selproduct[selproduct.length - 1].revenue += selproduct[i].revenue;
+    selproduct[selproduct.length - 1].profit += selproduct[i].profit;
+  }
   if (od) {
     return res
       .status(200)
@@ -240,6 +270,16 @@ router.get("/return", async function (req, res) {
       // Keep this one, we'll merge any others that match into it
       return true;
     });
+
+    returnProduct.push({
+      _id: "61af053cce857cd6dTOTAL000",
+      name: "Tổng cộng",
+      returnQuantity: 0,
+    });
+    for (var i = 0; i < returnProduct.length - 1; i++) {
+      returnProduct[returnProduct.length - 1].returnQuantity +=
+        returnProduct[i].returnQuantity;
+    }
 
     res
       .status(200)

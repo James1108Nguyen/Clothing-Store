@@ -101,54 +101,10 @@ router.get("/test", async function (req, res) {
   res.send(odd);
 });
 
-router.post("/testTime", async (req, res) => {
-  var fromDate = new Date(req.body.fromDate);
-  var toDate = new Date(req.body.toDate);
-  var response = [
-    {
-      before: {
-        From: fromDate,
-        To: toDate,
-      },
-    },
-  ];
-  console.log(fromDate, toDate);
-  fromDate.setHours(0, 0, 0, 0);
-  toDate.setHours(23, 59, 59, 59);
-  await fromDate.setHours(-7);
-  await toDate.setHours(23 - 7);
-  console.log(fromDate, toDate);
-  response[1] = {
-    after: {
-      From: fromDate,
-      To: toDate,
-    },
-  };
-  var od = await Order.find().populate({
-    path: "orderDetails",
-    populate: {
-      path: "product",
-      select: "name salePrice imageDisplay originPrice",
-    },
-  });
-  var odf = od.filter(function (item) {
-    return (
-      Date.parse(fromDate) <= Date.parse(item.dateOrder) &&
-      Date.parse(item.dateOrder) <= Date.parse(toDate)
-    );
-  });
-  if (odf) res.send(odf);
-});
 router.post("/sellbyDate", async (req, res) => {
   var fromDate = new Date(req.body.fromDate);
   var toDate = new Date(req.body.toDate);
   console.log(fromDate, toDate);
-  fromDate.setHours(0, 0, 0, 0);
-  // fromDate.setHours(-7);
-  toDate.setHours(23, 59, 59, 59);
-  // toDate.setHours(23 - 7);
-  console.log(fromDate, toDate);
-
   console.log("From " + Date.parse(fromDate) + "To" + Date.parse(toDate));
   var od = await Order.find().populate({
     path: "orderDetails",
@@ -219,9 +175,7 @@ router.post("/sellbyDate", async (req, res) => {
     };
   }
   if (od) {
-    return res
-      .status(200)
-      .send(selproduct.sort(compareValues("sellQuantity", "desc")));
+    return res.status(200).send(odf);
     // selproduct.sort(compareValues("sellQuantity", "desc"))
   } else {
     return res.status(500).send("Bad server");
@@ -287,34 +241,6 @@ router.get("/return", async function (req, res) {
   } else {
     res.status(500).send("Bad server");
   }
-});
-router.get("/returnbyDate", async function (req, res) {
-  var startOfDate = new Date();
-  var endOfDate = new Date();
-
-  const agg = Order.aggregate([
-    {
-      $match: {
-        dateOrder: {
-          $gte: startOfDate,
-          $lte: endOfDate,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: { $subtract: ["$orderTotal", "$totalReturnPrice"] } },
-        dateOrder: { $first: "$dateOrder" },
-      },
-    },
-  ]).exec((err, doc) => {
-    if (doc) {
-      res.send(doc);
-    } else {
-      res.send(err);
-    }
-  });
 });
 router.get("/listCategory", async (req, res) => {
   const name = req.query.name;

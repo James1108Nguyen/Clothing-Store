@@ -106,17 +106,6 @@ router.post("/sellbyDate", async (req, res) => {
   toDate.setHours(23, 59, 59, 59);
   console.log(fromDate, toDate);
 
-  // var fromDate = DateTime.local()
-  //   .setZone("Asia/Ho_Chi_Minh")
-  //   .startOf("day")
-  //   .toString();
-  // var toDate = DateTime.local()
-  //   .setZone("Asia/Ho_Chi_Minh")
-  //   .endOf("day")
-  //   .toString();
-  //Bỏ bên front end
-  // formDate.setHours(0, 0, 0, 0);
-  // toDate.setHours(23, 59, 59, 59);
   console.log("From " + Date.parse(fromDate) + "To" + Date.parse(toDate));
   var od = await Order.find().populate({
     path: "orderDetails",
@@ -190,6 +179,7 @@ router.post("/sellbyDate", async (req, res) => {
     return res
       .status(200)
       .send(selproduct.sort(compareValues("sellQuantity", "desc")));
+    // selproduct.sort(compareValues("sellQuantity", "desc"))
   } else {
     return res.status(500).send("Bad server");
   }
@@ -255,7 +245,34 @@ router.get("/return", async function (req, res) {
     res.status(500).send("Bad server");
   }
 });
+router.get("/returnbyDate", async function (req, res) {
+  var startOfDate = new Date();
+  var endOfDate = new Date();
 
+  const agg = Order.aggregate([
+    {
+      $match: {
+        dateOrder: {
+          $gte: startOfDate,
+          $lte: endOfDate,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: { $subtract: ["$orderTotal", "$totalReturnPrice"] } },
+        dateOrder: { $first: "$dateOrder" },
+      },
+    },
+  ]).exec((err, doc) => {
+    if (doc) {
+      res.send(doc);
+    } else {
+      res.send(err);
+    }
+  });
+});
 router.get("/listCategory", async (req, res) => {
   const name = req.query.name;
   var categories = await Category.find({ name: new RegExp("^" + name, "i") });

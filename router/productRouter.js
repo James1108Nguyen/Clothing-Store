@@ -86,7 +86,7 @@ router.get("/sell", async (req, res) => {
   });
 
   selproduct.push({
-    _id: "61af053cce857cd6dTOTAL00",
+    _id: "61af053cce857cd6d0TOTAL88",
     productName: "Tổng cộng",
     sellQuantity: 0,
     revenue: 0,
@@ -194,7 +194,7 @@ router.post("/sellbyDate", async (req, res) => {
     };
   }
   selproduct.push({
-    _id: "61af053cce857cd6d8888888",
+    _id: "61af053cce857cd6d0TOTAL88",
     productName: "Tổng cộng",
     sellQuantity: 0,
     revenue: 0,
@@ -272,7 +272,7 @@ router.get("/return", async function (req, res) {
     });
 
     returnProduct.push({
-      _id: "61af053cce857cd6dTOTAL000",
+      _id: "61af053cce857cd6d0TOTAL88",
       name: "Tổng cộng",
       returnQuantity: 0,
     });

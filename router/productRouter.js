@@ -130,10 +130,10 @@ router.post("/import", multerExcel, async (req, res) => {
             B: "category",
             C: "size",
             D: "quantity",
-            E: "costPrice",
-            F: "discount",
-            G: "salePrice",
-            H: "description",
+            E: "originPrice",
+            F: "costPrice",
+            G: "discount",
+            H: "salePrice",
           },
         },
       ],
@@ -176,7 +176,7 @@ router.post("/import", multerExcel, async (req, res) => {
               costPrice: excelData[i].costPrice,
               discount: excelData[i].discount,
               salePrice: excelData[i].salePrice,
-              desc: excelData[i].description,
+              originPrice: excelData[i].originPrice,
               imageDisplay: urlDefault,
               qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
               options: [
@@ -291,7 +291,7 @@ router.post("/import", multerExcel, async (req, res) => {
                   costPrice: excelData[i].costPrice,
                   discount: excelData[i].discount,
                   salePrice: excelData[i].salePrice,
-                  desc: excelData[i].description,
+                  originPrice: excelData[i].originPrice,
                   imageDisplay: urlDefault,
                   qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
                   options: [
@@ -434,7 +434,7 @@ router.post("/add", multerUploads, async (req, res) => {
           costPrice: req.body.costPrice,
           discount: req.body.discount,
           salePrice: req.body.salePrice,
-          desc: req.body.desc,
+          originPrice: req.body.originPrice,
           imageDisplay: image ? image.url : urlDefault,
           qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
           options: req.body.options,
@@ -460,7 +460,7 @@ router.post("/add", multerUploads, async (req, res) => {
       costPrice: req.body.costPrice,
       discount: req.body.discount,
       salePrice: req.body.salePrice,
-      desc: req.body.desc,
+      originPrice: req.body.originPrice,
 
       imageDisplay: image ? image.url : urlDefault,
       qrCodeUrl: qrCodeImage ? qrCodeImage.url : "",
@@ -542,7 +542,7 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
     costPrice: req.body.costPrice || prd.costPrice,
     salePrice: req.body.salePrice || prd.salePrice,
     discount: req.body.discount || prd.discount,
-    desc: req.body.desc || prd.desc,
+    originPrice: req.body.originPrice || prd.originPrice,
     options: req.body.options || prd.options,
     categoryId: req.body.categoryId || prd.categoryId,
   };
@@ -555,14 +555,6 @@ router.put("/updateProduct/:id", multerUploads, async (req, res) => {
     }
     return res.status(200).send(doc);
   });
-});
-
-router.post("/test", async (req, res) => {
-  let prd = await Product.findOne({
-    name: "Áo Nỉ Nam Thời Trang Trẻ Trung Chất Vải Co Dãn ZEROOOOOOOOOOOOO11",
-    "options.size": "XXL",
-  });
-  console.log(prd);
 });
 
 module.exports = router;

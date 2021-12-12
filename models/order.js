@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 var uniqueValidator = require("mongoose-unique-validator");
-
+const { DateTime } = require("luxon");
 const Schema = mongoose.Schema;
-
+const time = DateTime.local().setZone("Asia/Ho_Chi_Minh").toString();
 let order_Schema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -12,11 +12,10 @@ let order_Schema = new Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
-    required: true,
   },
   dateOrder: {
     type: Date,
-    default: Date.now(),
+    default: new Date(),
   },
   subTotal: {
     type: Number,
@@ -28,6 +27,12 @@ let order_Schema = new Schema({
   orderTotal: {
     type: Number,
   },
+<<<<<<< HEAD
+  qrCodeUrl: {
+    type: String,
+  },
+=======
+>>>>>>> main
   orderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,7 +41,11 @@ let order_Schema = new Schema({
   ],
   status: {
     type: String,
-    required: true,
+    default: "Chưa thanh toán",
+  },
+  totalReturnPrice: {
+    type: Number,
+    default: 0,
   },
 });
 

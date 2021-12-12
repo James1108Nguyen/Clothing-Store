@@ -37,12 +37,9 @@ let order_Schema = new Schema({
   orderTotal: {
     type: Number,
   },
-<<<<<<< HEAD
   qrCodeUrl: {
     type: String,
   },
-=======
->>>>>>> main
   orderDetails: [
     {
       type: mongoose.Schema.Types.ObjectId,

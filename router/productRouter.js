@@ -121,9 +121,11 @@ router.post("/sellbyDate", async (req, res) => {
   });
   var selproduct = [];
   odf.forEach((item) => {
+    console.log(item.orderDetails.length);
     if (item.orderDetails.length == 0) return;
     item.orderDetails.forEach((detail) => {
-      if (detail.quantity == 0 || item.product == null) return;
+      if (detail.quantity == 0 || detail.product == null)
+        return console.log("Return");
       let prd = {
         _id: detail.product._id,
         productName: detail.product.name,
@@ -133,9 +135,11 @@ router.post("/sellbyDate", async (req, res) => {
           (detail.product.salePrice - detail.product.originPrice) *
           detail.quantity,
       };
+      console.log(prd);
       selproduct.push(prd);
     });
   });
+
   //Filter date
   var seen = {};
   selproduct = selproduct.filter(function (entry) {
@@ -175,8 +179,10 @@ router.post("/sellbyDate", async (req, res) => {
     };
   }
   if (od) {
-    return res.status(200).send(odf);
-    // selproduct.sort(compareValues("sellQuantity", "desc"))
+    return res
+      .status(200)
+      .send(selproduct.sort(compareValues("sellQuantity", "desc")));
+    //selproduct.sort(compareValues("sellQuantity", "desc"))
   } else {
     return res.status(500).send("Bad server");
   }

@@ -102,8 +102,8 @@ router.get("/test", async function (req, res) {
 router.post("/sellbyDate", async (req, res) => {
   var fromDate = new Date(req.body.fromDate);
   var toDate = new Date(req.body.toDate);
-  fromDate.setHours(0, 0, 0, 0);
-  toDate.setHours(23, 59, 59, 59);
+  fromDate.setHours(-7, 0, 0, 0);
+  toDate.setHours(16, 59, 59, 59);
   console.log(fromDate, toDate);
 
   console.log("From " + Date.parse(fromDate) + "To" + Date.parse(toDate));

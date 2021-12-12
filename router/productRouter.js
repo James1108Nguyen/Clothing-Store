@@ -62,12 +62,14 @@ router.get("/sell", async (req, res) => {
 
   console.log(odd.length);
   odd.forEach((item) => {
+    if (item.product == null) return;
     if (item.quantity != 0) {
       console.log(item.product.name);
       console.log(item.quantity);
       for (var i = 0; i < selproduct.length; i++) {
         if (item.product.name == selproduct[i].productName) {
           {
+            console.log(item._id);
             console.log(item.product.name);
             console.log(selproduct[i].revenue);
             console.log("++++", item.product.salePrice);
@@ -92,18 +94,59 @@ router.get("/sell", async (req, res) => {
   }
 });
 router.get("/test", async function (req, res) {
-  // var formDate = new Date();
-  // var toDate = new Date();
-  // formDate.setHours(0, 0, 0, 0);
-  // toDate.setHours(23, 59, 59, 59);
-  // console.log(formDate);
-  // console.log(toDate);
+  var odd = await OrderDetail.find().populate(
+    "product",
+    "name originPrice salePrice"
+  );
+  res.send(odd);
+});
+
+router.post("/testTime", async (req, res) => {
+  var fromDate = new Date(req.body.fromDate);
+  var toDate = new Date(req.body.toDate);
+  var response = [
+    {
+      before: {
+        From: fromDate,
+        To: toDate,
+      },
+    },
+  ];
+  console.log(fromDate, toDate);
+  fromDate.setHours(0, 0, 0, 0);
+  toDate.setHours(23, 59, 59, 59);
+  await fromDate.setHours(-7);
+  await toDate.setHours(23 - 7);
+  console.log(fromDate, toDate);
+  response[1] = {
+    after: {
+      From: fromDate,
+      To: toDate,
+    },
+  };
+  var od = await Order.find().populate({
+    path: "orderDetails",
+    populate: {
+      path: "product",
+      select: "name salePrice imageDisplay originPrice",
+    },
+  });
+  var odf = od.filter(function (item) {
+    return (
+      Date.parse(fromDate) <= Date.parse(item.dateOrder) &&
+      Date.parse(item.dateOrder) <= Date.parse(toDate)
+    );
+  });
+  if (odf) res.send(odf);
 });
 router.post("/sellbyDate", async (req, res) => {
   var fromDate = new Date(req.body.fromDate);
   var toDate = new Date(req.body.toDate);
-  fromDate.setHours(-7, 0, 0, 0);
-  toDate.setHours(16, 59, 59, 59);
+  console.log(fromDate, toDate);
+  fromDate.setHours(0, 0, 0, 0);
+  // fromDate.setHours(-7);
+  toDate.setHours(23, 59, 59, 59);
+  // toDate.setHours(23 - 7);
   console.log(fromDate, toDate);
 
   console.log("From " + Date.parse(fromDate) + "To" + Date.parse(toDate));
@@ -124,7 +167,7 @@ router.post("/sellbyDate", async (req, res) => {
   odf.forEach((item) => {
     if (item.orderDetails.length == 0) return;
     item.orderDetails.forEach((detail) => {
-      if (detail.quantity == 0) return;
+      if (detail.quantity == 0 || item.product == null) return;
       let prd = {
         _id: detail.product._id,
         productName: detail.product.name,

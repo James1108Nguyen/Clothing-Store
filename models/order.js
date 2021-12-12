@@ -1,6 +1,11 @@
+const { DateTime } = require("luxon");
 const mongoose = require("mongoose");
 var uniqueValidator = require("mongoose-unique-validator");
+<<<<<<< HEAD
 const { DateTime } = require("luxon");
+=======
+const time = DateTime.local().setZone("Asia/Ho_Chi_Minh").toString();
+>>>>>>> 799ed2ceceb78d74c881caed4ef6b53eb9da964d
 const Schema = mongoose.Schema;
 const time = DateTime.local().setZone("Asia/Ho_Chi_Minh").toString();
 let order_Schema = new Schema({
@@ -14,8 +19,13 @@ let order_Schema = new Schema({
     ref: "Customer",
   },
   dateOrder: {
+<<<<<<< HEAD
     type: Date,
     default: new Date(),
+=======
+    type: String,
+    default: time,
+>>>>>>> 799ed2ceceb78d74c881caed4ef6b53eb9da964d
   },
   subTotal: {
     type: Number,

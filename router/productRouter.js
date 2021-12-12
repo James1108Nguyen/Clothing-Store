@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-
+const { OrderDetail } = require("../models/order");
+const { Order } = require("../models/order");
 const { Category } = require("../models/product");
 const { Product } = require("../models/product");
+const { ReturnOrderDetail } = require("../models/returnOrderDetail");
 const generateQR = require("../middlewares/gererateQR");
 const { multerUploads, multerExcel } = require("../middlewares/multer");
 const { multipleMulterUploads } = require("../middlewares/multiplefileMulter");
@@ -13,10 +15,264 @@ var ObjectId = require("mongoose").Types.ObjectId;
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs");
 const { send } = require("process");
+const { DateTime } = require("luxon");
 
 const urlDefault =
   "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xvdGhlc3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80";
 
+router.get("/sell", async (req, res) => {
+  var odd = await OrderDetail.find().populate(
+    "product",
+    "name originPrice salePrice"
+  );
+  var prd = await Product.find();
+  const selproduct = [
+    {
+      productName: "",
+      sellQuantity: 0,
+    },
+  ];
+  for (var i = 0; i < prd.length; i++) {
+    selproduct[i] = {
+      _id: prd[i]._id,
+      productName: prd[i].name,
+      sellQuantity: 0,
+      revenue: 0,
+      profit: 0,
+    };
+  }
+  function compareValues(key, order = "asc") {
+    return function innerSort(a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        return 0;
+      }
+
+      const varA = typeof a[key] === "string" ? a[key].toUpperCase() : a[key];
+      const varB = typeof b[key] === "string" ? b[key].toUpperCase() : b[key];
+
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return order === "desc" ? comparison * -1 : comparison;
+    };
+  }
+
+  console.log(odd.length);
+  odd.forEach((item) => {
+    if (item.quantity != 0) {
+      console.log(item.product.name);
+      console.log(item.quantity);
+      for (var i = 0; i < selproduct.length; i++) {
+        if (item.product.name == selproduct[i].productName) {
+          {
+            console.log(item.product.name);
+            console.log(selproduct[i].revenue);
+            console.log("++++", item.product.salePrice);
+            selproduct[i].profit +=
+              item.quantity *
+              (item.product.salePrice - item.product.originPrice);
+            selproduct[i].revenue += item.quantity * item.product.salePrice;
+            selproduct[i].sellQuantity += item.quantity;
+            console.log(selproduct[i].revenue);
+          }
+        }
+      }
+    }
+  });
+
+  if (odd) {
+    res
+      .status(200)
+      .send(selproduct.sort(compareValues("sellQuantity", "desc")));
+  } else {
+    res.status(500).send("Bad server");
+  }
+});
+router.get("/test", async function (req, res) {
+  // var formDate = new Date();
+  // var toDate = new Date();
+  // formDate.setHours(0, 0, 0, 0);
+  // toDate.setHours(23, 59, 59, 59);
+  // console.log(formDate);
+  // console.log(toDate);
+});
+router.post("/sellbyDate", async (req, res) => {
+  var fromDate = new Date(req.body.fromDate);
+  var toDate = new Date(req.body.toDate);
+  fromDate.setHours(0, 0, 0, 0);
+  toDate.setHours(23, 59, 59, 59);
+  console.log(fromDate, toDate);
+
+  console.log("From " + Date.parse(fromDate) + "To" + Date.parse(toDate));
+  var od = await Order.find().populate({
+    path: "orderDetails",
+    populate: {
+      path: "product",
+      select: "name salePrice imageDisplay originPrice",
+    },
+  });
+  var odf = od.filter(function (item) {
+    return (
+      Date.parse(fromDate) <= Date.parse(item.dateOrder) &&
+      Date.parse(item.dateOrder) <= Date.parse(toDate)
+    );
+  });
+  var selproduct = [];
+  odf.forEach((item) => {
+    if (item.orderDetails.length == 0) return;
+    item.orderDetails.forEach((detail) => {
+      if (detail.quantity == 0) return;
+      let prd = {
+        _id: detail.product._id,
+        productName: detail.product.name,
+        sellQuantity: detail.quantity,
+        revenue: detail.product.salePrice * detail.quantity,
+        profit:
+          (detail.product.salePrice - detail.product.originPrice) *
+          detail.quantity,
+      };
+      selproduct.push(prd);
+    });
+  });
+  //Filter date
+  var seen = {};
+  selproduct = selproduct.filter(function (entry) {
+    var previous;
+    // Have we seen this label before?
+    if (seen.hasOwnProperty(entry.productName)) {
+      // Yes, grab it and add this data to it
+      previous = seen[entry.productName];
+      previous.sellQuantity += entry.sellQuantity;
+      previous.revenue += entry.revenue;
+      previous.profit += entry.profit;
+      // Don't keep this entry, we've merged it into the previous one
+      return false;
+    }
+
+    // Remember that we've seen it
+    seen[entry.productName] = entry;
+
+    // Keep this one, we'll merge any others that match into it
+    return true;
+  });
+  function compareValues(key, order = "asc") {
+    return function innerSort(a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        return 0;
+      }
+      const varA = typeof a[key] === "string" ? a[key].toUpperCase() : a[key];
+      const varB = typeof b[key] === "string" ? b[key].toUpperCase() : b[key];
+
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return order === "desc" ? comparison * -1 : comparison;
+    };
+  }
+  if (od) {
+    return res
+      .status(200)
+      .send(selproduct.sort(compareValues("sellQuantity", "desc")));
+    // selproduct.sort(compareValues("sellQuantity", "desc"))
+  } else {
+    return res.status(500).send("Bad server");
+  }
+});
+router.get("/return", async function (req, res) {
+  var ReturnOrderDetails = await ReturnOrderDetail.find().populate({
+    path: "orderDetail",
+    populate: {
+      path: "product",
+      select: "name saleprice imageDisplay salePrice",
+    },
+  });
+  function compareValues(key, order = "asc") {
+    return function innerSort(a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        return 0;
+      }
+      const varA = typeof a[key] === "string" ? a[key].toUpperCase() : a[key];
+      const varB = typeof b[key] === "string" ? b[key].toUpperCase() : b[key];
+
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return order === "desc" ? comparison * -1 : comparison;
+    };
+  }
+  var returnProduct = [];
+  if (ReturnOrderDetails) {
+    ReturnOrderDetails.forEach((item) => {
+      returnProduct.push({
+        _id: item.orderDetail.product._id,
+        name: item.orderDetail.product.name,
+        returnQuantity: item.returnedQuantity,
+      });
+    });
+    var seen = {};
+    returnProduct = returnProduct.filter(function (entry) {
+      var previous;
+      // Have we seen this label before?
+      if (seen.hasOwnProperty(entry.name)) {
+        // Yes, grab it and add this data to it
+        previous = seen[entry.name];
+        previous.returnQuantity += entry.returnQuantity;
+
+        // Don't keep this entry, we've merged it into the previous one
+        return false;
+      }
+
+      // Remember that we've seen it
+      seen[entry.name] = entry;
+
+      // Keep this one, we'll merge any others that match into it
+      return true;
+    });
+
+    res
+      .status(200)
+      .send(returnProduct.sort(compareValues("returnQuantity", "desc")));
+  } else {
+    res.status(500).send("Bad server");
+  }
+});
+router.get("/returnbyDate", async function (req, res) {
+  var startOfDate = new Date();
+  var endOfDate = new Date();
+
+  const agg = Order.aggregate([
+    {
+      $match: {
+        dateOrder: {
+          $gte: startOfDate,
+          $lte: endOfDate,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: { $subtract: ["$orderTotal", "$totalReturnPrice"] } },
+        dateOrder: { $first: "$dateOrder" },
+      },
+    },
+  ]).exec((err, doc) => {
+    if (doc) {
+      res.send(doc);
+    } else {
+      res.send(err);
+    }
+  });
+});
 router.get("/listCategory", async (req, res) => {
   const name = req.query.name;
   var categories = await Category.find({ name: new RegExp("^" + name, "i") });
@@ -62,7 +318,6 @@ router.post("/find", (req, res) => {
 //List product by id
 router.get("/productByCategory/", async (req, res) => {
   const category = req.query.category;
-
   if (category == "Tất cả" || category == "all") {
     var products = await Product.find();
     if (products) {

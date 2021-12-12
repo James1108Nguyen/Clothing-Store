@@ -22,13 +22,13 @@ router.get("/", async function (req, res) {
       },
     ],
   });
-
   if (returnOrders) {
     res.status(200).send(returnOrders);
   } else {
     res.status(500).send("Bad server");
   }
 });
+
 router.get("/:id", async function (req, res) {
   var returnOrder = await await ReturnOrder.findById(req.params.id)
     .populate({
@@ -61,6 +61,7 @@ router.get("/:id", async function (req, res) {
   }
 });
 router.post("/", async function (req, res) {
+  console.log();
   const returnOrderDetails = req.body.returnOrderDetails;
 
   const returnOrderDetailIds = [];

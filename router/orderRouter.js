@@ -11,8 +11,8 @@ router.get("/list", async (req, res) => {
   var orders = await Order.find()
     .populate({ path: "orderDetails" })
     .populate("customer", "name phone point")
-    .populate("user", "fullname")
-    .sort({ dateOrder: -1 });
+    .populate("user", "fullname");
+
   if (orders) {
     res.status(200).send(orders);
   } else {

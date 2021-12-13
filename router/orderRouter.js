@@ -12,7 +12,7 @@ router.get("/list", async (req, res) => {
     .populate({ path: "orderDetails" })
     .populate("customer", "name phone point")
     .populate("user", "fullname")
-    .sort({ dateOrder: -1 });
+    .sort({ dateOrder: 1 });
   if (orders) {
     res.status(200).send(orders);
   } else {
